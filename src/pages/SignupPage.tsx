@@ -204,15 +204,6 @@ export function SignupPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Debug info in development */}
-        {import.meta.env.DEV && (
-          <div className="mt-4 p-3 bg-gray-100 rounded-lg text-xs text-gray-600">
-            <p><strong>Debug Info:</strong></p>
-            <p>Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? '✓ Configurado' : '✗ No configurado'}</p>
-            <p>Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✓ Configurado' : '✗ No configurado'}</p>
-          </div>
-        )}
       </div>
     </div>
   )
