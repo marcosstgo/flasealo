@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Camera, ArrowLeft, Heart, Download, Upload } from 'lucide-react'
-import { Button } from '../components/ui/Button'
 import { PhotoViewer } from '../components/PhotoViewer'
+import { ThemeToggle } from '../components/ThemeToggle'
 import { supabase } from '../lib/supabase'
 
 interface Event {
@@ -56,6 +56,7 @@ export function GalleryPage() {
         slug: 'demo-event',
         is_public: true,
         allow_downloads: true,
+        gallery_password: null,
       }
     }
 
@@ -127,27 +128,27 @@ export function GalleryPage() {
 
   if (eventLoading) {
     return (
-      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/40" />
+      <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 dark:border-white/40 border-gray-400" />
       </div>
     )
   }
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
+      <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
-          <div className="mx-auto w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
-            <Camera className="w-8 h-8 text-white/40" />
+          <div className="mx-auto w-16 h-16 dark:bg-white/10 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <Camera className="w-8 h-8 dark:text-white/40 text-gray-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Evento No Encontrado</h1>
-          <p className="text-white/50 mb-6">
+          <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-2">Evento No Encontrado</h1>
+          <p className="dark:text-white/50 text-gray-500 mb-6">
             El evento que buscas no existe o no está disponible públicamente.
           </p>
           <Link to="/">
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+            <button className="dark:border dark:border-white/20 dark:text-white/60 dark:hover:text-white border border-gray-300 text-gray-500 hover:text-gray-900 px-6 py-2.5 rounded-full transition-colors text-sm">
               Volver al Inicio
-            </Button>
+            </button>
           </Link>
         </div>
       </div>
@@ -168,11 +169,11 @@ export function GalleryPage() {
 
   if (needsPassword) {
     return (
-      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center p-4">
+      <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] flex items-center justify-center p-4">
         <div className="w-full max-w-sm text-center">
           <div className="mb-8">
-            <h1 className="text-2xl font-light text-white mb-2">{event.name}</h1>
-            <p className="text-white/40 text-sm">Esta galería está protegida con contraseña</p>
+            <h1 className="text-2xl font-light dark:text-white text-gray-900 mb-2">{event.name}</h1>
+            <p className="dark:text-white/40 text-gray-500 text-sm">Esta galería está protegida con contraseña</p>
           </div>
           <div className="space-y-3">
             <input
@@ -181,7 +182,7 @@ export function GalleryPage() {
               onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false) }}
               onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
               placeholder="Contraseña"
-              className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-4 py-3 text-center focus:outline-none focus:border-white/50"
+              className="w-full dark:bg-white/10 bg-gray-100 dark:border dark:border-white/20 border border-gray-300 dark:text-white text-gray-900 dark:placeholder-white/30 placeholder-gray-400 rounded-lg px-4 py-3 text-center focus:outline-none dark:focus:border-white/50 focus:border-gray-500 transition-colors"
               autoFocus
             />
             {passwordError && (
@@ -189,7 +190,7 @@ export function GalleryPage() {
             )}
             <button
               onClick={handleUnlock}
-              className="w-full bg-white text-gray-900 font-medium py-3 rounded-lg hover:bg-gray-100 transition-colors"
+              className="w-full dark:bg-white dark:text-gray-900 bg-gray-900 text-white font-medium py-3 rounded-lg hover:opacity-90 transition-opacity"
             >
               Ver galería
             </button>
@@ -200,26 +201,27 @@ export function GalleryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d]">
+    <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7]">
       {/* Header */}
-      <header className="bg-black/60 backdrop-blur-sm border-b border-white/10 sticky top-0 z-10">
+      <header className="dark:bg-black/60 bg-[#faf9f7]/90 backdrop-blur-sm border-b dark:border-white/10 border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-4">
               <Link to="/">
-                <button className="text-white/50 hover:text-white transition-colors">
+                <button className="dark:text-white/50 dark:hover:text-white text-gray-400 hover:text-gray-700 transition-colors">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               </Link>
-              <span className="text-white/30 text-xs tracking-widest uppercase font-medium">
+              <span className="dark:text-white/30 text-gray-400 text-xs tracking-widest uppercase font-medium">
                 Flashealo
               </span>
             </div>
             <div className="flex items-center space-x-3">
-              <Heart className="w-4 h-4 text-white/30" />
-              <span className="text-sm text-white/40">{photos?.length || 0} fotos</span>
+              <ThemeToggle />
+              <Heart className="w-4 h-4 dark:text-white/30 text-gray-400" />
+              <span className="text-sm dark:text-white/40 text-gray-500">{photos?.length || 0} fotos</span>
               {!event.allow_downloads && (
-                <span className="text-xs bg-white/10 text-white/50 px-2 py-1 rounded-full">
+                <span className="text-xs dark:bg-white/10 dark:text-white/50 bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
                   Solo vista
                 </span>
               )}
@@ -230,17 +232,17 @@ export function GalleryPage() {
 
       {/* Event Title */}
       <section className="py-12 px-4 text-center">
-        <h1 className="text-3xl md:text-5xl font-light text-white tracking-tight mb-3">
+        <h1 className="text-3xl md:text-5xl font-light dark:text-white text-gray-900 tracking-tight mb-3">
           {event.name}
         </h1>
         {event.description && (
-          <p className="text-white/40 text-base max-w-xl mx-auto">
+          <p className="dark:text-white/40 text-gray-500 text-base max-w-xl mx-auto">
             {event.description}
           </p>
         )}
         {eventSlug === 'demo-event' && (
-          <div className="mt-6 bg-white/5 border border-white/10 rounded-lg p-4 max-w-lg mx-auto">
-            <p className="text-white/50 text-sm">
+          <div className="mt-6 dark:bg-white/5 bg-gray-100 dark:border dark:border-white/10 border border-gray-200 rounded-lg p-4 max-w-lg mx-auto">
+            <p className="dark:text-white/50 text-gray-500 text-sm">
               Demostración — en un evento real aquí aparecen las fotos de los invitados.
             </p>
           </div>
@@ -253,16 +255,16 @@ export function GalleryPage() {
           {photosLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="aspect-square bg-white/5 animate-pulse" />
+                <div key={i} className="aspect-square dark:bg-white/5 bg-gray-200 animate-pulse" />
               ))}
             </div>
           ) : !photos || photos.length === 0 ? (
             <div className="text-center py-24">
-              <div className="mx-auto w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-                <Camera className="w-8 h-8 text-white/20" />
+              <div className="mx-auto w-16 h-16 dark:bg-white/5 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Camera className="w-8 h-8 dark:text-white/20 text-gray-300" />
               </div>
-              <h3 className="text-lg font-medium text-white/50 mb-2">Aún no hay fotos</h3>
-              <p className="text-white/30 text-sm">
+              <h3 className="text-lg font-medium dark:text-white/50 text-gray-500 mb-2">Aún no hay fotos</h3>
+              <p className="dark:text-white/30 text-gray-400 text-sm">
                 Las fotos aparecerán aquí una vez que los invitados las suban y sean aprobadas.
               </p>
             </div>
@@ -271,7 +273,7 @@ export function GalleryPage() {
               {photos.map((photo, index) => (
                 <div
                   key={photo.id}
-                  className="group relative aspect-square overflow-hidden cursor-pointer bg-white/5"
+                  className="group relative aspect-square overflow-hidden cursor-pointer dark:bg-white/5 bg-gray-200"
                   onClick={() => openPhotoViewer(index)}
                 >
                   <img
@@ -281,10 +283,8 @@ export function GalleryPage() {
                     loading="lazy"
                   />
 
-                  {/* Hover overlay */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300" />
 
-                  {/* Download button */}
                   {event.allow_downloads && (
                     <button
                       onClick={(e) => {
@@ -297,7 +297,6 @@ export function GalleryPage() {
                     </button>
                   )}
 
-                  {/* Uploader name */}
                   {photo.uploader_name && (
                     <div className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-black/70 to-transparent p-3 pt-6">
                       <p className="text-white/80 text-xs">{photo.uploader_name}</p>
@@ -312,17 +311,17 @@ export function GalleryPage() {
 
       {/* Upload CTA */}
       {eventSlug !== 'demo-event' && (
-        <section className="py-16 px-4 border-t border-white/10">
+        <section className="py-16 px-4 border-t dark:border-white/10 border-gray-200">
           <div className="max-w-sm mx-auto text-center">
-            <Upload className="w-8 h-8 text-white/20 mx-auto mb-4" />
-            <h3 className="text-lg font-light text-white/70 mb-2">
+            <Upload className="w-8 h-8 dark:text-white/20 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-light dark:text-white/70 text-gray-600 mb-2">
               ¿Tomaste fotos del evento?
             </h3>
-            <p className="text-white/30 text-sm mb-6">
+            <p className="dark:text-white/30 text-gray-400 text-sm mb-6">
               Compártelas con todos los invitados
             </p>
             <Link to={`/upload/${eventSlug}`}>
-              <button className="border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all px-6 py-2.5 rounded-full text-sm">
+              <button className="dark:border dark:border-white/20 dark:text-white/60 dark:hover:text-white dark:hover:border-white/40 border border-gray-300 text-gray-500 hover:text-gray-900 hover:border-gray-400 transition-all px-6 py-2.5 rounded-full text-sm">
                 Subir fotos
               </button>
             </Link>

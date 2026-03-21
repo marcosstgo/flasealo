@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, AlertCircle, CheckCircle } from 'lucide-react'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Card, CardContent, CardHeader } from '../components/ui/Card'
+import { Camera } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { ThemeToggle } from '../components/ThemeToggle'
 
 export function ResetPasswordPage() {
   const [password, setPassword] = useState('')
@@ -16,7 +15,6 @@ export function ResetPasswordPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Supabase sets the session from the URL hash on load
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         setSessionReady(true)
@@ -51,78 +49,71 @@ export function ResetPasswordPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Camera className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Flashealo.com
-            </span>
-          </div>
-        </div>
+  const inputClass = "w-full dark:bg-white/[0.07] bg-white dark:border dark:border-white/15 border border-gray-300 dark:text-white text-gray-900 dark:placeholder-white/30 placeholder-gray-400 rounded-xl px-4 py-3 focus:outline-none dark:focus:border-white/40 focus:border-gray-500 transition-colors text-sm dark:shadow-none shadow-sm disabled:opacity-40"
 
-        <Card>
-          <CardHeader>
-            <h1 className="text-2xl font-bold text-gray-900 text-center">
-              Nueva Contraseña
-            </h1>
-            <p className="text-gray-600 text-center">
-              Ingresa tu nueva contraseña
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
+  return (
+    <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] flex flex-col">
+      <header className="px-6 h-16 flex items-center justify-between">
+        <Link to="/" className="flex items-center space-x-2">
+          <div className="w-7 h-7 dark:bg-white bg-gray-900 rounded-md flex items-center justify-center">
+            <Camera className="w-4 h-4 dark:text-black text-white" />
+          </div>
+          <span className="text-lg font-semibold tracking-tight dark:text-white text-gray-900">Flashealo</span>
+        </Link>
+        <ThemeToggle />
+      </header>
+
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-10">
+            <h1 className="text-2xl font-light dark:text-white text-gray-900 mb-2">Nueva contraseña</h1>
+            <p className="dark:text-white/40 text-gray-500 text-sm">Ingresa tu nueva contraseña</p>
+          </div>
+
+          <div className="space-y-4">
             {success ? (
-              <div className="text-center space-y-4">
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-4 rounded-lg flex items-start space-x-2">
-                  <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                  <span>¡Contraseña actualizada! Redirigiendo al dashboard...</span>
-                </div>
+              <div className="dark:bg-green-500/10 bg-green-50 dark:border dark:border-green-500/20 border border-green-200 dark:text-green-300 text-green-700 px-4 py-4 rounded-xl text-sm text-center">
+                ¡Contraseña actualizada! Redirigiendo al dashboard...
               </div>
             ) : (
               <>
                 {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-start space-x-2">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    <span>{error}</span>
+                  <div className="dark:bg-red-500/10 bg-red-50 dark:border dark:border-red-500/20 border border-red-200 dark:text-red-300 text-red-600 px-4 py-3 rounded-xl text-sm">
+                    {error}
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <Input
-                    label="Nueva contraseña"
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <input
                     type="password"
-                    placeholder="Mínimo 8 caracteres"
+                    placeholder="Nueva contraseña (mín. 8 caracteres)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={!sessionReady}
+                    className={inputClass}
                   />
-                  <Input
-                    label="Confirmar contraseña"
+                  <input
                     type="password"
-                    placeholder="Repite la contraseña"
+                    placeholder="Confirmar contraseña"
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                     required
                     disabled={!sessionReady}
+                    className={inputClass}
                   />
-                  <Button
+                  <button
                     type="submit"
-                    className="w-full"
-                    isLoading={isLoading}
                     disabled={isLoading || !sessionReady}
+                    className="w-full dark:bg-white dark:text-black bg-gray-900 text-white font-medium py-3 rounded-xl hover:opacity-90 transition-opacity text-sm disabled:opacity-50"
                   >
                     {isLoading ? 'Guardando...' : 'Guardar nueva contraseña'}
-                  </Button>
+                  </button>
                 </form>
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

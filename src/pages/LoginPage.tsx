@@ -1,11 +1,9 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Camera, AlertCircle, CheckCircle } from 'lucide-react'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Card, CardContent, CardHeader } from '../components/ui/Card'
+import { Camera } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { ThemeToggle } from '../components/ThemeToggle'
 
 interface LoginForm {
   email: string
@@ -15,36 +13,23 @@ interface LoginForm {
 export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const { signIn } = useAuth()
   const navigate = useNavigate()
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginForm>()
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>()
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
     setError('')
-    setSuccess('')
 
     try {
-      console.log('Attempting to sign in user:', data.email)
-      
       const { data: authData, error: authError } = await signIn(data.email, data.password)
-      
-      console.log('Sign in response:', { authData, authError })
 
       if (authError) {
-        console.error('Auth error:', authError)
-        
-        // Provide more user-friendly error messages
         if (authError.message.includes('Invalid login credentials')) {
-          setError('Email o contraseña incorrectos. Por favor verifica tus datos.')
+          setError('Email o contraseña incorrectos.')
         } else if (authError.message.includes('Email not confirmed')) {
-          setError('Por favor confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada.')
+          setError('Por favor confirma tu email antes de iniciar sesión.')
         } else {
           setError(authError.message)
         }
@@ -56,125 +41,88 @@ export function LoginPage() {
         return
       }
 
-      console.log('User signed in successfully')
-      setSuccess('¡Inicio de sesión exitoso! Redirigiendo...')
-      
-      setTimeout(() => {
-        navigate('/dashboard')
-      }, 1000)
-
+      navigate('/dashboard')
     } catch (err: any) {
-      console.error('Unexpected error during login:', err)
-      setError(err.message || 'Ocurrió un error inesperado. Por favor intenta de nuevo.')
+      setError(err.message || 'Ocurrió un error inesperado.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Camera className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Flashealo.com
-            </span>
+    <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] flex flex-col">
+      {/* Header */}
+      <header className="px-6 h-16 flex items-center justify-between">
+        <Link to="/" className="flex items-center space-x-2">
+          <div className="w-7 h-7 dark:bg-white bg-gray-900 rounded-md flex items-center justify-center">
+            <Camera className="w-4 h-4 dark:text-black text-white" />
           </div>
-        </div>
+          <span className="text-lg font-semibold tracking-tight dark:text-white text-gray-900">Flashealo</span>
+        </Link>
+        <ThemeToggle />
+      </header>
 
-        <Card>
-          <CardHeader>
-            <h1 className="text-2xl font-bold text-gray-900 text-center">
-              Bienvenido de Vuelta
-            </h1>
-            <p className="text-gray-600 text-center">
-              Inicia sesión en tu cuenta para continuar
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {/* Form */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-10">
+            <h1 className="text-2xl font-light dark:text-white text-gray-900 mb-2">Bienvenido de vuelta</h1>
+            <p className="dark:text-white/40 text-gray-500 text-sm">Inicia sesión en tu cuenta</p>
+          </div>
+
+          <div className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-start space-x-2">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span>{error}</span>
+              <div className="dark:bg-red-500/10 bg-red-50 dark:border dark:border-red-500/20 border border-red-200 dark:text-red-300 text-red-600 px-4 py-3 rounded-xl text-sm">
+                {error}
               </div>
             )}
 
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm flex items-start space-x-2">
-                <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span>{success}</span>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  {...register('email', {
+                    required: 'El email es requerido',
+                    pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Email inválido' },
+                  })}
+                  className="w-full dark:bg-white/[0.07] bg-white dark:border dark:border-white/15 border border-gray-300 dark:text-white text-gray-900 dark:placeholder-white/30 placeholder-gray-400 rounded-xl px-4 py-3 focus:outline-none dark:focus:border-white/40 focus:border-gray-500 transition-colors text-sm dark:shadow-none shadow-sm"
+                />
+                {errors.email && <p className="text-red-400 text-xs mt-1 ml-1">{errors.email.message}</p>}
               </div>
-            )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <Input
-                label="Email"
-                type="email"
-                placeholder="tu@email.com"
-                {...register('email', {
-                  required: 'El email es requerido',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Email inválido',
-                  },
-                })}
-                error={errors.email?.message}
-              />
+              <div>
+                <input
+                  type="password"
+                  placeholder="Contraseña"
+                  {...register('password', { required: 'La contraseña es requerida' })}
+                  className="w-full dark:bg-white/[0.07] bg-white dark:border dark:border-white/15 border border-gray-300 dark:text-white text-gray-900 dark:placeholder-white/30 placeholder-gray-400 rounded-xl px-4 py-3 focus:outline-none dark:focus:border-white/40 focus:border-gray-500 transition-colors text-sm dark:shadow-none shadow-sm"
+                />
+                {errors.password && <p className="text-red-400 text-xs mt-1 ml-1">{errors.password.message}</p>}
+              </div>
 
-              <Input
-                label="Contraseña"
-                type="password"
-                placeholder="Tu contraseña"
-                {...register('password', {
-                  required: 'La contraseña es requerida',
-                })}
-                error={errors.password?.message}
-              />
-
-              <Button
+              <button
                 type="submit"
-                className="w-full"
-                isLoading={isLoading}
                 disabled={isLoading}
+                className="w-full dark:bg-white dark:text-black bg-gray-900 text-white font-medium py-3 rounded-xl hover:opacity-90 transition-opacity text-sm disabled:opacity-50"
               >
                 {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-              </Button>
+              </button>
             </form>
 
-            <div className="text-center space-y-2 pt-4">
-              <p className="text-sm text-gray-600">
-                <Link
-                  to="/forgot-password"
-                  className="text-purple-600 hover:text-purple-700 font-medium"
-                >
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
+            <div className="text-center space-y-3 pt-2">
+              <Link to="/forgot-password" className="block dark:text-white/40 dark:hover:text-white/70 text-gray-400 hover:text-gray-700 text-sm transition-colors">
+                ¿Olvidaste tu contraseña?
+              </Link>
+              <p className="dark:text-white/30 text-gray-400 text-sm">
                 ¿No tienes una cuenta?{' '}
-                <Link
-                  to="/signup"
-                  className="text-purple-600 hover:text-purple-700 font-medium"
-                >
-                  Crear cuenta
+                <Link to="/signup" className="dark:text-white dark:hover:text-white/80 text-gray-900 hover:text-gray-700 font-medium transition-colors">
+                  Registrarse
                 </Link>
               </p>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Debug info in development */}
-        {import.meta.env.DEV && (
-          <div className="mt-4 p-3 bg-gray-100 rounded-lg text-xs text-gray-600">
-            <p><strong>Debug Info:</strong></p>
-            <p>Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? '✓ Configurado' : '✗ No configurado'}</p>
-            <p>Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✓ Configurado' : '✗ No configurado'}</p>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

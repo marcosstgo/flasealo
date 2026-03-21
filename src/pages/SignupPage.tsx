@@ -1,11 +1,9 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Camera, AlertCircle, CheckCircle } from 'lucide-react'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Card, CardContent, CardHeader } from '../components/ui/Card'
+import { Camera } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { ThemeToggle } from '../components/ThemeToggle'
 
 interface SignupForm {
   email: string
@@ -20,13 +18,7 @@ export function SignupPage() {
   const { signUp } = useAuth()
   const navigate = useNavigate()
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<SignupForm>()
-
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<SignupForm>()
   const password = watch('password')
 
   const onSubmit = async (data: SignupForm) => {
@@ -35,23 +27,13 @@ export function SignupPage() {
     setSuccess('')
 
     try {
-      console.log('Attempting to sign up user:', data.email)
-      
       const { data: authData, error: authError } = await signUp(data.email, data.password)
-      
-      console.log('Sign up response:', { authData, authError })
 
       if (authError) {
-        console.error('Auth error:', authError)
-        
-        // Provide more user-friendly error messages for common cases
-        if (authError.message.includes('User already registered') || 
-            authError.message.includes('already been registered')) {
-          setError('Este email ya está registrado. ¿Ya tienes una cuenta? Intenta iniciar sesión.')
+        if (authError.message.includes('User already registered') || authError.message.includes('already been registered')) {
+          setError('Este email ya está registrado. ¿Ya tienes una cuenta?')
         } else if (authError.message.includes('Password should be at least')) {
           setError('La contraseña debe tener al menos 6 caracteres.')
-        } else if (authError.message.includes('Invalid email')) {
-          setError('El formato del email no es válido.')
         } else {
           setError(authError.message)
         }
@@ -63,147 +45,110 @@ export function SignupPage() {
         return
       }
 
-      // Check if email confirmation is required
       if (!authData.session) {
-        setSuccess('¡Cuenta creada exitosamente! Revisa tu email para confirmar tu cuenta antes de iniciar sesión.')
-        setTimeout(() => {
-          navigate('/login')
-        }, 3000)
+        setSuccess('¡Cuenta creada! Revisa tu email para confirmar tu cuenta.')
+        setTimeout(() => navigate('/login'), 3000)
         return
       }
 
-      // If we have a session, the user is logged in immediately
-      console.log('User signed up and logged in successfully')
-      setSuccess('¡Cuenta creada exitosamente! Redirigiendo...')
-      
-      setTimeout(() => {
-        navigate('/dashboard')
-      }, 1500)
-
+      navigate('/dashboard')
     } catch (err: any) {
-      console.error('Unexpected error during signup:', err)
-      setError(err.message || 'Ocurrió un error inesperado. Por favor intenta de nuevo.')
+      setError(err.message || 'Ocurrió un error inesperado.')
     } finally {
       setIsLoading(false)
     }
   }
 
+  const inputClass = "w-full dark:bg-white/[0.07] bg-white dark:border dark:border-white/15 border border-gray-300 dark:text-white text-gray-900 dark:placeholder-white/30 placeholder-gray-400 rounded-xl px-4 py-3 focus:outline-none dark:focus:border-white/40 focus:border-gray-500 transition-colors text-sm dark:shadow-none shadow-sm"
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Camera className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Flashealo.com
-            </span>
+    <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] flex flex-col">
+      {/* Header */}
+      <header className="px-6 h-16 flex items-center justify-between">
+        <Link to="/" className="flex items-center space-x-2">
+          <div className="w-7 h-7 dark:bg-white bg-gray-900 rounded-md flex items-center justify-center">
+            <Camera className="w-4 h-4 dark:text-black text-white" />
           </div>
-        </div>
+          <span className="text-lg font-semibold tracking-tight dark:text-white text-gray-900">Flashealo</span>
+        </Link>
+        <ThemeToggle />
+      </header>
 
-        <Card>
-          <CardHeader>
-            <h1 className="text-2xl font-bold text-gray-900 text-center">
-              Crear Cuenta
-            </h1>
-            <p className="text-gray-600 text-center">
-              Comienza a compartir fotos en tus eventos
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {/* Form */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-10">
+            <h1 className="text-2xl font-light dark:text-white text-gray-900 mb-2">Crear cuenta</h1>
+            <p className="dark:text-white/40 text-gray-500 text-sm">Empieza a compartir fotos en tus eventos</p>
+          </div>
+
+          <div className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-start space-x-2">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span>{error}</span>
+              <div className="dark:bg-red-500/10 bg-red-50 dark:border dark:border-red-500/20 border border-red-200 dark:text-red-300 text-red-600 px-4 py-3 rounded-xl text-sm">
+                {error}
               </div>
             )}
-
             {success && (
-              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm flex items-start space-x-2">
-                <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span>{success}</span>
+              <div className="dark:bg-green-500/10 bg-green-50 dark:border dark:border-green-500/20 border border-green-200 dark:text-green-300 text-green-600 px-4 py-3 rounded-xl text-sm">
+                {success}
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <Input
-                label="Email"
-                type="email"
-                placeholder="tu@email.com"
-                {...register('email', {
-                  required: 'El email es requerido',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Email inválido',
-                  },
-                })}
-                error={errors.email?.message}
-              />
-
-              <Input
-                label="Contraseña"
-                type="password"
-                placeholder="Mínimo 6 caracteres"
-                {...register('password', {
-                  required: 'La contraseña es requerida',
-                  minLength: {
-                    value: 6,
-                    message: 'La contraseña debe tener al menos 6 caracteres',
-                  },
-                })}
-                error={errors.password?.message}
-              />
-
-              <Input
-                label="Confirmar Contraseña"
-                type="password"
-                placeholder="Repite tu contraseña"
-                {...register('confirmPassword', {
-                  required: 'Por favor confirma tu contraseña',
-                  validate: (value) =>
-                    value === password || 'Las contraseñas no coinciden',
-                })}
-                error={errors.confirmPassword?.message}
-              />
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-xs text-blue-800">
-                  <strong>Nota:</strong> Los nuevos usuarios necesitan autorización del administrador 
-                  para crear eventos. Podrás gestionar eventos existentes normalmente una vez registrado.
-                </p>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+              <div>
+                <input type="email" placeholder="Email"
+                  {...register('email', {
+                    required: 'El email es requerido',
+                    pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Email inválido' },
+                  })}
+                  className={inputClass}
+                />
+                {errors.email && <p className="text-red-400 text-xs mt-1 ml-1">{errors.email.message}</p>}
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                <p className="text-xs text-gray-700">
-                  Al crear una cuenta, aceptas nuestros términos de servicio y política de privacidad.
-                </p>
+              <div>
+                <input type="password" placeholder="Contraseña (mín. 6 caracteres)"
+                  {...register('password', {
+                    required: 'La contraseña es requerida',
+                    minLength: { value: 6, message: 'Mínimo 6 caracteres' },
+                  })}
+                  className={inputClass}
+                />
+                {errors.password && <p className="text-red-400 text-xs mt-1 ml-1">{errors.password.message}</p>}
               </div>
 
-              <Button
+              <div>
+                <input type="password" placeholder="Confirmar contraseña"
+                  {...register('confirmPassword', {
+                    required: 'Por favor confirma tu contraseña',
+                    validate: (value) => value === password || 'Las contraseñas no coinciden',
+                  })}
+                  className={inputClass}
+                />
+                {errors.confirmPassword && <p className="text-red-400 text-xs mt-1 ml-1">{errors.confirmPassword.message}</p>}
+              </div>
+
+              <p className="dark:text-white/25 text-gray-400 text-xs leading-relaxed px-1 pt-1">
+                Los nuevos usuarios necesitan aprobación del administrador para crear eventos.
+              </p>
+
+              <button
                 type="submit"
-                className="w-full"
-                isLoading={isLoading}
                 disabled={isLoading}
+                className="w-full dark:bg-white dark:text-black bg-gray-900 text-white font-medium py-3 rounded-xl hover:opacity-90 transition-opacity text-sm disabled:opacity-50"
               >
                 {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
-              </Button>
+              </button>
             </form>
 
-            <div className="text-center pt-4">
-              <p className="text-sm text-gray-600">
-                ¿Ya tienes una cuenta?{' '}
-                <Link
-                  to="/login"
-                  className="text-purple-600 hover:text-purple-700 font-medium"
-                >
-                  Iniciar sesión
-                </Link>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            <p className="text-center dark:text-white/30 text-gray-400 text-sm pt-2">
+              ¿Ya tienes una cuenta?{' '}
+              <Link to="/login" className="dark:text-white dark:hover:text-white/80 text-gray-900 hover:text-gray-700 font-medium transition-colors">
+                Iniciar sesión
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )
