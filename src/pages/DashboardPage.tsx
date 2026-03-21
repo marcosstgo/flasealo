@@ -274,269 +274,165 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0d0d0d] text-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Panel de Control
-              </span>
-            </Link>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600 hidden sm:block">{user?.email}</span>
-              {isAdmin && (
-                <Link to="/admin">
-                  <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50">
-                    <Shield className="w-4 h-4 mr-2" />
-                    Admin
-                  </Button>
-                </Link>
-              )}
-              <Button variant="ghost" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4" />
-              </Button>
+      <header className="bg-black/40 backdrop-blur-md border-b border-white/10 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-7 h-7 bg-white rounded-md flex items-center justify-center">
+              <Camera className="w-4 h-4 text-black" />
             </div>
+            <span className="text-lg font-semibold tracking-tight">Flashealo</span>
+          </Link>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-white/30 hidden sm:block">{user?.email}</span>
+            {isAdmin && (
+              <Link to="/admin">
+                <button className="text-white/50 hover:text-white text-sm transition-colors flex items-center gap-1.5">
+                  <Shield className="w-4 h-4" />
+                  Admin
+                </button>
+              </Link>
+            )}
+            <button onClick={handleSignOut} className="text-white/30 hover:text-white transition-colors">
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Permission Notice */}
+      <main className="max-w-7xl mx-auto px-6 py-12">
+
+        {/* Permission notice */}
         {!canCreateEvents && !isAdmin && (
-          <Card className="border-amber-200 bg-amber-50 mb-8">
-            <CardContent className="p-6">
-              <div className="flex items-start space-x-3">
-                <Lock className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-lg font-semibold text-amber-800 mb-2">
-                    Permisos Limitados
-                  </h3>
-                  <p className="text-amber-700 mb-3">
-                    Tu cuenta está registrada pero necesitas autorización del administrador 
-                    para crear nuevos eventos. Puedes gestionar los eventos existentes normalmente.
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => window.location.href = 'mailto:admin@flashealo.com?subject=Solicitud de permisos para crear eventos'}
-                  >
-                    Solicitar Permisos
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Dashboard Stats */}
-        {stats && !statsLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">
-                      Total Eventos
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats.totalEvents}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-blue-100">
-                    <Calendar className="w-6 h-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">
-                      Total Fotos
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats.totalPhotos}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-purple-100">
-                    <Camera className="w-6 h-6 text-purple-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">
-                      Fotos Pendientes
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats.pendingPhotos}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-orange-100">
-                    <Settings className="w-6 h-6 text-orange-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">
-                      Fotos Aprobadas
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats.approvedPhotos}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-green-100">
-                    <Users className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 mb-10 flex items-start gap-4">
+            <Lock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-amber-200 font-medium mb-1">Cuenta pendiente de aprobación</p>
+              <p className="text-amber-200/60 text-sm mb-3">
+                Necesitas autorización para crear eventos. Puedes gestionar los existentes normalmente.
+              </p>
+              <button
+                onClick={() => window.location.href = 'mailto:hello@marcossantiago.com?subject=Solicitud de permisos para crear eventos'}
+                className="text-amber-300 text-sm border border-amber-500/30 px-4 py-1.5 rounded-full hover:bg-amber-500/10 transition-colors"
+              >
+                Solicitar acceso
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Events Section */}
-        <div className="flex justify-between items-center mb-8">
+        {/* Stats */}
+        {stats && !statsLoading && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/10 rounded-2xl overflow-hidden mb-10">
+            {[
+              { label: 'Eventos', value: stats.totalEvents },
+              { label: 'Fotos totales', value: stats.totalPhotos },
+              { label: 'Pendientes', value: stats.pendingPhotos },
+              { label: 'Aprobadas', value: stats.approvedPhotos },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-white/5 px-6 py-5">
+                <p className="text-3xl font-light text-white mb-1">{stat.value}</p>
+                <p className="text-white/30 text-xs uppercase tracking-widest">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Events header */}
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Tus Eventos</h1>
-            <p className="text-gray-600">Gestiona tus eventos de compartir fotos</p>
+            <h1 className="text-2xl font-light text-white">Tus eventos</h1>
           </div>
           {(canCreateEvents || isAdmin) ? (
             <Link to="/create-event">
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Nuevo Evento
-              </Button>
+              <button className="bg-white text-black text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-100 transition-colors flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Nuevo evento
+              </button>
             </Link>
           ) : (
-            <Button disabled className="opacity-50 cursor-not-allowed">
-              <Lock className="w-4 h-4 mr-2" />
-              Nuevo Evento
-            </Button>
+            <button disabled className="border border-white/10 text-white/20 text-sm px-5 py-2.5 rounded-full flex items-center gap-2 cursor-not-allowed">
+              <Lock className="w-4 h-4" />
+              Nuevo evento
+            </button>
           )}
         </div>
 
-        {/* Events Grid */}
+        {/* Events grid */}
         {!events || events.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <Calendar className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Aún no tienes eventos
-              </h3>
-              <p className="text-gray-600 mb-6">
-                {canCreateEvents || isAdmin 
-                  ? 'Crea tu primer evento para comenzar a recopilar fotos'
-                  : 'Una vez que tengas permisos, podrás crear eventos para recopilar fotos'
-                }
-              </p>
-              {(canCreateEvents || isAdmin) ? (
-                <Link to="/create-event">
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Crea Tu Primer Evento
-                  </Button>
-                </Link>
-              ) : (
-                <Button 
-                  variant="outline"
-                  onClick={() => window.location.href = 'mailto:admin@flashealo.com?subject=Solicitud de permisos para crear eventos'}
-                >
-                  Solicitar Permisos
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          <div className="border border-white/10 rounded-2xl text-center py-24">
+            <Calendar className="w-10 h-10 text-white/10 mx-auto mb-4" />
+            <p className="text-white/30 mb-6">
+              {canCreateEvents || isAdmin
+                ? 'Crea tu primer evento para comenzar'
+                : 'Una vez aprobado podrás crear eventos'}
+            </p>
+            {(canCreateEvents || isAdmin) && (
+              <Link to="/create-event">
+                <button className="bg-white text-black text-sm font-medium px-6 py-2.5 rounded-full hover:bg-gray-100 transition-colors">
+                  Crear primer evento
+                </button>
+              </Link>
+            )}
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {events.map((event) => (
-              <Card key={event.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
-                        {event.name}
-                      </h3>
-                      {event.description && (
-                        <p className="text-sm text-gray-600 line-clamp-2">
-                          {event.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-1 ml-2">
-                      <div className={`w-2 h-2 rounded-full ${
-                        event.is_public ? 'bg-green-400' : 'bg-gray-400'
-                      }`} />
-                      <span className="text-xs text-gray-500 whitespace-nowrap">
-                        {event.is_public ? 'Público' : 'Privado'}
-                      </span>
-                    </div>
+              <div key={event.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/8 transition-colors group">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-medium truncate mb-1">{event.name}</h3>
+                    {event.description && (
+                      <p className="text-white/30 text-sm line-clamp-1">{event.description}</p>
+                    )}
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Total fotos:</span>
-                      <span className="font-medium">{event.photo_count || 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Pendientes:</span>
-                      <span className="font-medium text-orange-600">{event.pending_photos || 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Aprobadas:</span>
-                      <span className="font-medium text-green-600">{event.approved_photos || 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Creado:</span>
-                      <span className="font-medium">
-                        {new Date(event.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
+                  <div className={`w-1.5 h-1.5 rounded-full mt-2 ml-3 flex-shrink-0 ${event.is_public ? 'bg-green-400' : 'bg-white/20'}`} />
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  <div className="bg-white/5 rounded-xl px-3 py-2.5 text-center">
+                    <p className="text-white text-lg font-light">{event.photo_count || 0}</p>
+                    <p className="text-white/30 text-xs">fotos</p>
                   </div>
-                  
-                  <div className="flex gap-2 pt-2">
-                    <Link to={`/events/${event.id}`} className="flex-1">
-                      <Button size="sm" className="w-full">
-                        <Settings className="w-4 h-4 mr-1" />
-                        Gestionar
-                      </Button>
-                    </Link>
-                    <Link to={`/gallery/${event.slug}`}>
-                      <Button variant="outline" size="sm">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </Link>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleDeleteEvent(event.id, event.name)}
-                      isLoading={deletingEventId === event.id}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  <div className="bg-white/5 rounded-xl px-3 py-2.5 text-center">
+                    <p className="text-amber-400 text-lg font-light">{event.pending_photos || 0}</p>
+                    <p className="text-white/30 text-xs">pendientes</p>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="bg-white/5 rounded-xl px-3 py-2.5 text-center">
+                    <p className="text-green-400 text-lg font-light">{event.approved_photos || 0}</p>
+                    <p className="text-white/30 text-xs">aprobadas</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Link to={`/events/${event.id}`} className="flex-1">
+                    <button className="w-full bg-white text-black text-xs font-medium py-2 rounded-xl hover:bg-gray-100 transition-colors flex items-center justify-center gap-1.5">
+                      <Settings className="w-3.5 h-3.5" />
+                      Gestionar
+                    </button>
+                  </Link>
+                  <Link to={`/gallery/${event.slug}`}>
+                    <button className="border border-white/10 text-white/50 hover:text-white hover:border-white/30 px-3 py-2 rounded-xl transition-colors">
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                  </Link>
+                  <button
+                    onClick={() => handleDeleteEvent(event.id, event.name)}
+                    className="border border-white/10 text-white/30 hover:text-red-400 hover:border-red-500/30 px-3 py-2 rounded-xl transition-colors"
+                  >
+                    {deletingEventId === event.id ? (
+                      <div className="w-3.5 h-3.5 border border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+
+                <p className="text-white/20 text-xs mt-3">
+                  {new Date(event.created_at).toLocaleDateString('es-PR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </p>
+              </div>
             ))}
           </div>
         )}
