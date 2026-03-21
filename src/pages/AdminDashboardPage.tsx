@@ -70,6 +70,12 @@ export function AdminDashboardPage() {
     queryFn: fetchAdminStats,
   })
 
+  const { data: pendingApprovals, isLoading: pendingLoading } = useQuery({
+    queryKey: ['pending-approvals'],
+    queryFn: fetchPendingApprovals,
+    refetchInterval: 60000,
+  })
+
   const { data: events, isLoading: eventsLoading } = useQuery({
     queryKey: ['admin-events', searchTerm],
     queryFn: () => fetchAllEvents(searchTerm),
@@ -93,6 +99,8 @@ export function AdminDashboardPage() {
     mutationFn: updateEventPermission,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
     },
   })
 
@@ -177,6 +185,34 @@ export function AdminDashboardPage() {
         totalPhotos: 0,
         pendingPhotos: 0
       }
+    }
+  }
+
+  async function fetchPendingApprovals(): Promise<{ id: string; email: string; created_at: string }[]> {
+    try {
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('can_create_event', false)
+        .eq('role', 'user')
+        .order('created_at', { ascending: false })
+
+      if (!roles?.length) return []
+
+      const userEmails = await fetchUserEmails()
+      const emailMap = new Map(userEmails.map(u => [u.id, u]))
+
+      return roles.map(role => {
+        const emailData = emailMap.get(role.user_id)
+        return {
+          id: role.user_id,
+          email: emailData?.email || 'Email no disponible',
+          created_at: emailData?.created_at || role.created_at,
+        }
+      })
+    } catch (error) {
+      console.error('Error fetching pending approvals:', error)
+      return []
     }
   }
 
@@ -401,30 +437,40 @@ export function AdminDashboardPage() {
               <p className="text-gray-600">Vista general de la plataforma Flashealo</p>
             </div>
 
-            {/* Security Notice */}
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-3">
-                  <Info className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                      Control de Creación de Eventos
+            {/* Pending Approvals */}
+            {!pendingLoading && pendingApprovals && pendingApprovals.length > 0 && (
+              <Card className="border-amber-300 bg-amber-50">
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600" />
+                    <h3 className="text-lg font-semibold text-amber-800">
+                      {pendingApprovals.length} usuario{pendingApprovals.length > 1 ? 's' : ''} esperando aprobación
                     </h3>
-                    <div className="text-blue-700 space-y-2">
-                      <p>Ahora tienes control total sobre quién puede crear eventos en la plataforma:</p>
-                      <ul className="list-disc list-inside space-y-1 ml-4">
-                        <li>Los nuevos usuarios se registran sin permisos de creación de eventos</li>
-                        <li>Solo tú como administrador puedes otorgar estos permisos</li>
-                        <li>Los usuarios pueden gestionar sus eventos existentes normalmente</li>
-                        <li>Los administradores siempre pueden crear eventos</li>
-                        <li>Los emails de usuarios se obtienen de forma segura mediante Edge Functions</li>
-                      </ul>
-                      <p className="text-sm">Usa la pestaña "Usuarios" para gestionar permisos individuales.</p>
-                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {pendingApprovals.map((u) => (
+                    <div key={u.id} className="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-amber-200">
+                      <div>
+                        <p className="font-medium text-gray-900">{u.email}</p>
+                        <p className="text-xs text-gray-500">
+                          Registrado {new Date(u.created_at).toLocaleDateString('es-PR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => updateEventPermissionMutation.mutate({ userId: u.id, canCreateEvent: true })}
+                        isLoading={updateEventPermissionMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <UserCheck className="w-4 h-4 mr-2" />
+                        Aprobar
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
             {statsLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
