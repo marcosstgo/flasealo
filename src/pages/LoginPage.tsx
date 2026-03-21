@@ -145,7 +145,15 @@ export function LoginPage() {
               </Button>
             </form>
 
-            <div className="text-center pt-4">
+            <div className="text-center space-y-2 pt-4">
+              <p className="text-sm text-gray-600">
+                <Link
+                  to="/forgot-password"
+                  className="text-purple-600 hover:text-purple-700 font-medium"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </p>
               <p className="text-sm text-gray-600">
                 ¿No tienes una cuenta?{' '}
                 <Link
@@ -158,6 +166,15 @@ export function LoginPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Debug info in development */}
+        {import.meta.env.DEV && (
+          <div className="mt-4 p-3 bg-gray-100 rounded-lg text-xs text-gray-600">
+            <p><strong>Debug Info:</strong></p>
+            <p>Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? '✓ Configurado' : '✗ No configurado'}</p>
+            <p>Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✓ Configurado' : '✗ No configurado'}</p>
+          </div>
+        )}
       </div>
     </div>
   )

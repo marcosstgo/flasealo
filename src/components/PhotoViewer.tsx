@@ -8,6 +8,7 @@ interface Photo {
   created_at: string
   format: string
   size: number
+  uploader_name?: string | null
 }
 
 interface PhotoViewerProps {
@@ -196,14 +197,13 @@ export function PhotoViewer({
       </div>
 
       {/* Bottom info */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent">
-        <div className="text-center text-white text-sm">
-          <p>Usa las flechas del teclado o desliza para navegar</p>
-          <p className="text-xs text-gray-300 mt-1">
-            Subida: {new Date(currentPhoto.created_at).toLocaleDateString()}
+      {currentPhoto.uploader_name && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+          <p className="text-center text-white/70 text-sm">
+            Foto de <span className="text-white font-medium">{currentPhoto.uploader_name}</span>
           </p>
         </div>
-      </div>
+      )}
 
       {/* Dots indicator for mobile */}
       {photos.length > 1 && photos.length <= 20 && (

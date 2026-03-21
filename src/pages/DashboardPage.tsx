@@ -73,100 +73,37 @@ export function DashboardPage() {
   })
 
   async function fetchUserEvents(): Promise<Event[]> {
-    if (!user?.id) {
-      console.error('No user ID available for fetching events')
-      throw new Error('Usuario no autenticado')
-    }
+    if (!user?.id) throw new Error('Usuario no autenticado')
 
-    try {
-      console.log('Fetching events for user:', user.id)
+    const { data: eventsData, error: eventsError } = await supabase
+      .from('events')
+      .select(`
+        id,
+        name,
+        description,
+        is_public,
+        slug,
+        qr_code_url,
+        created_at,
+        updated_at,
+        photos(status)
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
 
-      // Test database connection first
-      const { data: testData, error: testError } = await supabase
-        .from('events')
-        .select('count')
-        .limit(1)
+    if (eventsError) throw new Error(`Error al cargar eventos: ${eventsError.message}`)
+    if (!eventsData || eventsData.length === 0) return []
 
-      if (testError) {
-        console.error('Database connection test failed:', testError)
-        throw new Error(`Error de conexión a la base de datos: ${testError.message}`)
+    return eventsData.map((event) => {
+      const photos = (event.photos as { status: string }[]) || []
+      return {
+        ...event,
+        photos: undefined,
+        photo_count: photos.length,
+        pending_photos: photos.filter(p => p.status === 'pending').length,
+        approved_photos: photos.filter(p => p.status === 'approved').length,
       }
-
-      // Fetch user events
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select(`
-          id,
-          name,
-          description,
-          is_public,
-          slug,
-          qr_code_url,
-          created_at,
-          updated_at
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (eventsError) {
-        console.error('Error fetching events:', eventsError)
-        throw new Error(`Error al cargar eventos: ${eventsError.message}`)
-      }
-
-      console.log('Events fetched successfully:', eventsData?.length || 0, 'events')
-
-      if (!eventsData || eventsData.length === 0) {
-        console.log('No events found for user')
-        return []
-      }
-
-      // Fetch photo counts for each event
-      const eventsWithCounts = await Promise.all(
-        eventsData.map(async (event) => {
-          try {
-            const { data: photos, error: photosError } = await supabase
-              .from('photos')
-              .select('status')
-              .eq('event_id', event.id)
-
-            if (photosError) {
-              console.warn(`Error fetching photos for event ${event.id}:`, photosError)
-              return {
-                ...event,
-                photo_count: 0,
-                pending_photos: 0,
-                approved_photos: 0
-              }
-            }
-
-            const photoCount = photos?.length || 0
-            const pendingPhotos = photos?.filter(p => p.status === 'pending').length || 0
-            const approvedPhotos = photos?.filter(p => p.status === 'approved').length || 0
-
-            return {
-              ...event,
-              photo_count: photoCount,
-              pending_photos: pendingPhotos,
-              approved_photos: approvedPhotos
-            }
-          } catch (error) {
-            console.warn(`Error processing event ${event.id}:`, error)
-            return {
-              ...event,
-              photo_count: 0,
-              pending_photos: 0,
-              approved_photos: 0
-            }
-          }
-        })
-      )
-
-      console.log('Events with photo counts calculated successfully')
-      return eventsWithCounts
-    } catch (error) {
-      console.error('Error in fetchUserEvents:', error)
-      throw error
-    }
+    })
   }
 
   async function fetchDashboardStats(): Promise<DashboardStats> {
@@ -203,30 +140,15 @@ export function DashboardPage() {
   }
 
   async function deleteEvent(eventId: string) {
-    if (!user?.id) {
-      throw new Error('Usuario no autenticado')
-    }
+    if (!user?.id) throw new Error('Usuario no autenticado')
 
-    try {
-      console.log('Deleting event:', eventId)
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+      .eq('user_id', user.id)
 
-      // Delete the event (CASCADE will handle photos)
-      const { error: eventError } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', eventId)
-        .eq('user_id', user.id) // Extra security check
-
-      if (eventError) {
-        console.error('Error deleting event:', eventError)
-        throw new Error(`Error al eliminar evento: ${eventError.message}`)
-      }
-
-      console.log('Event deleted successfully')
-    } catch (error) {
-      console.error('Error in deleteEvent:', error)
-      throw error
-    }
+    if (error) throw new Error(`Error al eliminar evento: ${error.message}`)
   }
 
   const handleSignOut = async () => {

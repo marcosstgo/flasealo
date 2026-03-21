@@ -11,6 +11,8 @@ import { CreateEventPage } from './pages/CreateEventPage'
 import { EventManagePage } from './pages/EventManagePage'
 import { UploadPage } from './pages/UploadPage'
 import { GalleryPage } from './pages/GalleryPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,6 +82,8 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/upload/:eventSlug" element={<UploadPage />} />
             <Route path="/gallery/:eventSlug" element={<GalleryPage />} />
             <Route

@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Camera, ArrowLeft, Heart, Download } from 'lucide-react'
+import { Camera, ArrowLeft, Heart, Download, Upload } from 'lucide-react'
 import { Button } from '../components/ui/Button'
-import { Card, CardContent } from '../components/ui/Card'
 import { PhotoViewer } from '../components/PhotoViewer'
 import { supabase } from '../lib/supabase'
 
@@ -22,6 +21,7 @@ interface Photo {
   created_at: string
   format: string
   size: number
+  uploader_name: string | null
 }
 
 export function GalleryPage() {
@@ -44,7 +44,6 @@ export function GalleryPage() {
   async function fetchEventBySlug(): Promise<Event> {
     if (!eventSlug) throw new Error('Event slug is required')
 
-    // Si es el evento demo, crear datos de muestra
     if (eventSlug === 'demo-event') {
       return {
         id: 'demo-id',
@@ -52,7 +51,7 @@ export function GalleryPage() {
         description: 'Celebrando nuestro amor con familia y amigos en este día especial',
         slug: 'demo-event',
         is_public: true,
-        allow_downloads: true // Demo permite descargas
+        allow_downloads: true,
       }
     }
 
@@ -70,65 +69,16 @@ export function GalleryPage() {
   async function fetchApprovedPhotos(): Promise<Photo[]> {
     if (!event?.id) return []
 
-    // Si es el evento demo, devolver fotos de muestra usando Pexels
     if (event.id === 'demo-id') {
       return [
-        {
-          id: '1',
-          image_path: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=800',
-          created_at: new Date().toISOString(),
-          format: 'image/jpeg',
-          size: 1024000
-        },
-        {
-          id: '2',
-          image_path: 'https://images.pexels.com/photos/1729931/pexels-photo-1729931.jpeg?auto=compress&cs=tinysrgb&w=800',
-          created_at: new Date().toISOString(),
-          format: 'image/jpeg',
-          size: 1024000
-        },
-        {
-          id: '3',
-          image_path: 'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg?auto=compress&cs=tinysrgb&w=800',
-          created_at: new Date().toISOString(),
-          format: 'image/jpeg',
-          size: 1024000
-        },
-        {
-          id: '4',
-          image_path: 'https://images.pexels.com/photos/1024960/pexels-photo-1024960.jpeg?auto=compress&cs=tinysrgb&w=800',
-          created_at: new Date().toISOString(),
-          format: 'image/jpeg',
-          size: 1024000
-        },
-        {
-          id: '5',
-          image_path: 'https://images.pexels.com/photos/1729797/pexels-photo-1729797.jpeg?auto=compress&cs=tinysrgb&w=800',
-          created_at: new Date().toISOString(),
-          format: 'image/jpeg',
-          size: 1024000
-        },
-        {
-          id: '6',
-          image_path: 'https://images.pexels.com/photos/1444424/pexels-photo-1444424.jpeg?auto=compress&cs=tinysrgb&w=800',
-          created_at: new Date().toISOString(),
-          format: 'image/jpeg',
-          size: 1024000
-        },
-        {
-          id: '7',
-          image_path: 'https://images.pexels.com/photos/1729799/pexels-photo-1729799.jpeg?auto=compress&cs=tinysrgb&w=800',
-          created_at: new Date().toISOString(),
-          format: 'image/jpeg',
-          size: 1024000
-        },
-        {
-          id: '8',
-          image_path: 'https://images.pexels.com/photos/1444416/pexels-photo-1444416.jpeg?auto=compress&cs=tinysrgb&w=800',
-          created_at: new Date().toISOString(),
-          format: 'image/jpeg',
-          size: 1024000
-        }
+        { id: '1', image_path: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=800', created_at: new Date().toISOString(), format: 'image/jpeg', size: 1024000, uploader_name: 'Ana' },
+        { id: '2', image_path: 'https://images.pexels.com/photos/1729931/pexels-photo-1729931.jpeg?auto=compress&cs=tinysrgb&w=800', created_at: new Date().toISOString(), format: 'image/jpeg', size: 1024000, uploader_name: 'Carlos' },
+        { id: '3', image_path: 'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg?auto=compress&cs=tinysrgb&w=800', created_at: new Date().toISOString(), format: 'image/jpeg', size: 1024000, uploader_name: null },
+        { id: '4', image_path: 'https://images.pexels.com/photos/1024960/pexels-photo-1024960.jpeg?auto=compress&cs=tinysrgb&w=800', created_at: new Date().toISOString(), format: 'image/jpeg', size: 1024000, uploader_name: 'María' },
+        { id: '5', image_path: 'https://images.pexels.com/photos/1729797/pexels-photo-1729797.jpeg?auto=compress&cs=tinysrgb&w=800', created_at: new Date().toISOString(), format: 'image/jpeg', size: 1024000, uploader_name: 'Pedro' },
+        { id: '6', image_path: 'https://images.pexels.com/photos/1444424/pexels-photo-1444424.jpeg?auto=compress&cs=tinysrgb&w=800', created_at: new Date().toISOString(), format: 'image/jpeg', size: 1024000, uploader_name: null },
+        { id: '7', image_path: 'https://images.pexels.com/photos/1729799/pexels-photo-1729799.jpeg?auto=compress&cs=tinysrgb&w=800', created_at: new Date().toISOString(), format: 'image/jpeg', size: 1024000, uploader_name: 'Laura' },
+        { id: '8', image_path: 'https://images.pexels.com/photos/1444416/pexels-photo-1444416.jpeg?auto=compress&cs=tinysrgb&w=800', created_at: new Date().toISOString(), format: 'image/jpeg', size: 1024000, uploader_name: null },
       ]
     }
 
@@ -144,15 +94,8 @@ export function GalleryPage() {
   }
 
   const getImageUrl = (imagePath: string) => {
-    // Si es una URL de Pexels, devolverla directamente
-    if (imagePath.startsWith('https://')) {
-      return imagePath
-    }
-    
-    // Si no, obtener la URL de Supabase
-    const { data } = supabase.storage
-      .from('event-photos')
-      .getPublicUrl(imagePath)
+    if (imagePath.startsWith('https://')) return imagePath
+    const { data } = supabase.storage.from('event-photos').getPublicUrl(imagePath)
     return data.publicUrl
   }
 
@@ -180,27 +123,27 @@ export function GalleryPage() {
 
   if (eventLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/40" />
       </div>
     )
   }
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
-          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <Camera className="w-8 h-8 text-red-400" />
+          <div className="mx-auto w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
+            <Camera className="w-8 h-8 text-white/40" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Evento No Encontrado
-          </h1>
-          <p className="text-gray-600 mb-4">
+          <h1 className="text-2xl font-bold text-white mb-2">Evento No Encontrado</h1>
+          <p className="text-white/50 mb-6">
             El evento que buscas no existe o no está disponible públicamente.
           </p>
           <Link to="/">
-            <Button>Volver al Inicio</Button>
+            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+              Volver al Inicio
+            </Button>
           </Link>
         </div>
       </div>
@@ -208,32 +151,26 @@ export function GalleryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+    <div className="min-h-screen bg-[#0d0d0d]">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-white/20 sticky top-0 z-10">
+      <header className="bg-black/60 backdrop-blur-sm border-b border-white/10 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-4">
               <Link to="/">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Inicio
-                </Button>
+                <button className="text-white/50 hover:text-white transition-colors">
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
               </Link>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Camera className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  Flashealo.com
-                </span>
-              </div>
+              <span className="text-white/30 text-xs tracking-widest uppercase font-medium">
+                Flashealo
+              </span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Heart className="w-5 h-5 text-red-500" />
-              <span className="text-sm text-gray-600">{photos?.length || 0} fotos</span>
+            <div className="flex items-center space-x-3">
+              <Heart className="w-4 h-4 text-white/30" />
+              <span className="text-sm text-white/40">{photos?.length || 0} fotos</span>
               {!event.allow_downloads && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                <span className="text-xs bg-white/10 text-white/50 px-2 py-1 rounded-full">
                   Solo vista
                 </span>
               )}
@@ -242,101 +179,81 @@ export function GalleryPage() {
         </div>
       </header>
 
-      {/* Event Info */}
-      <section className="py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            {event.name}
-          </h1>
-          {event.description && (
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
-              {event.description}
+      {/* Event Title */}
+      <section className="py-12 px-4 text-center">
+        <h1 className="text-3xl md:text-5xl font-light text-white tracking-tight mb-3">
+          {event.name}
+        </h1>
+        {event.description && (
+          <p className="text-white/40 text-base max-w-xl mx-auto">
+            {event.description}
+          </p>
+        )}
+        {eventSlug === 'demo-event' && (
+          <div className="mt-6 bg-white/5 border border-white/10 rounded-lg p-4 max-w-lg mx-auto">
+            <p className="text-white/50 text-sm">
+              Demostración — en un evento real aquí aparecen las fotos de los invitados.
             </p>
-          )}
-          {eventSlug === 'demo-event' && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto">
-              <p className="text-blue-800 text-sm">
-                <strong>Esta es una demostración.</strong> Las fotos mostradas son de ejemplo. 
-                En un evento real, aquí aparecerían las fotos subidas por los invitados después de ser aprobadas.
-                <br />
-                <strong>¡Haz clic en cualquier foto para verla en pantalla completa!</strong>
-              </p>
-            </div>
-          )}
-          {!event.allow_downloads && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-2xl mx-auto mt-4">
-              <p className="text-amber-800 text-sm">
-                <strong>Modo solo vista:</strong> El organizador ha configurado esta galería 
-                para que las fotos solo puedan ser visualizadas, no descargadas.
-              </p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </section>
 
-      {/* Photos Gallery */}
-      <section className="pb-12 px-4 sm:px-6 lg:px-8">
+      {/* Photo Grid */}
+      <section className="pb-20 px-2 sm:px-4">
         <div className="max-w-7xl mx-auto">
           {photosLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                <div key={i} className="aspect-square bg-white/5 animate-pulse" />
               ))}
             </div>
           ) : !photos || photos.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <Camera className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Aún no hay fotos
-                </h3>
-                <p className="text-gray-600">
-                  Las fotos aparecerán aquí una vez que los invitados las suban y sean aprobadas.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="text-center py-24">
+              <div className="mx-auto w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                <Camera className="w-8 h-8 text-white/20" />
+              </div>
+              <h3 className="text-lg font-medium text-white/50 mb-2">Aún no hay fotos</h3>
+              <p className="text-white/30 text-sm">
+                Las fotos aparecerán aquí una vez que los invitados las suban y sean aprobadas.
+              </p>
+            </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
               {photos.map((photo, index) => (
-                <div key={photo.id} className="group relative">
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer">
-                    <div 
-                      className="aspect-square relative"
-                      onClick={() => openPhotoViewer(index)}
-                    >
-                      <img
-                        src={getImageUrl(photo.image_path)}
-                        alt="Foto del evento"
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      
-                      {/* Overlay with download button - only show if downloads are allowed */}
-                      {event.allow_downloads && (
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
-                          <Button
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              downloadImage(getImageUrl(photo.image_path), photo.id)
-                            }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white text-gray-900 hover:bg-gray-100"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
+                <div
+                  key={photo.id}
+                  className="group relative aspect-square overflow-hidden cursor-pointer bg-white/5"
+                  onClick={() => openPhotoViewer(index)}
+                >
+                  <img
+                    src={getImageUrl(photo.image_path)}
+                    alt="Foto del evento"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
 
-                      {/* Click indicator */}
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white text-sm font-medium bg-black/50 px-3 py-1 rounded-full">
-                          Ver en grande
-                        </div>
-                      </div>
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300" />
+
+                  {/* Download button */}
+                  {event.allow_downloads && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        downloadImage(getImageUrl(photo.image_path), photo.id)
+                      }}
+                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 hover:bg-black/80 text-white rounded-full p-2"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+
+                  {/* Uploader name */}
+                  {photo.uploader_name && (
+                    <div className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-black/70 to-transparent p-3 pt-6">
+                      <p className="text-white/80 text-xs">{photo.uploader_name}</p>
                     </div>
-                  </Card>
+                  )}
                 </div>
               ))}
             </div>
@@ -346,19 +263,19 @@ export function GalleryPage() {
 
       {/* Upload CTA */}
       {eventSlug !== 'demo-event' && (
-        <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white/50">
-          <div className="max-w-2xl mx-auto text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              ¿Tienes fotos de este evento?
+        <section className="py-16 px-4 border-t border-white/10">
+          <div className="max-w-sm mx-auto text-center">
+            <Upload className="w-8 h-8 text-white/20 mx-auto mb-4" />
+            <h3 className="text-lg font-light text-white/70 mb-2">
+              ¿Tomaste fotos del evento?
             </h3>
-            <p className="text-gray-600 mb-6">
-              Comparte tus momentos especiales con todos los invitados
+            <p className="text-white/30 text-sm mb-6">
+              Compártelas con todos los invitados
             </p>
             <Link to={`/upload/${eventSlug}`}>
-              <Button size="lg">
-                <Camera className="w-5 h-5 mr-2" />
-                Subir Fotos
-              </Button>
+              <button className="border border-white/20 text-white/60 hover:text-white hover:border-white/40 transition-all px-6 py-2.5 rounded-full text-sm">
+                Subir fotos
+              </button>
             </Link>
           </div>
         </section>

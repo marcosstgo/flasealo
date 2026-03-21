@@ -84,13 +84,13 @@ export function EventManagePage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Event not found
+            Evento no encontrado
           </h1>
           <p className="text-gray-600 mb-4">
-            The event you're looking for doesn't exist or you don't have access to it.
+            El evento que buscas no existe o no tienes acceso a él.
           </p>
           <Link to="/dashboard">
-            <Button>Back to Dashboard</Button>
+            <Button>Volver al Dashboard</Button>
           </Link>
         </div>
       </div>
