@@ -13,6 +13,7 @@ interface Event {
   slug: string
   is_public: boolean
   allow_downloads: boolean
+  gallery_password: string | null
 }
 
 interface Photo {
@@ -28,6 +29,9 @@ export function GalleryPage() {
   const { eventSlug } = useParams<{ eventSlug: string }>()
   const [viewerOpen, setViewerOpen] = useState(false)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [unlocked, setUnlocked] = useState(false)
+  const [passwordError, setPasswordError] = useState(false)
 
   const { data: event, isLoading: eventLoading } = useQuery({
     queryKey: ['event-by-slug', eventSlug],
@@ -145,6 +149,51 @@ export function GalleryPage() {
               Volver al Inicio
             </Button>
           </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Password gate
+  const needsPassword = event?.gallery_password && eventSlug !== 'demo-event' && !unlocked
+
+  const handleUnlock = () => {
+    if (passwordInput === event?.gallery_password) {
+      setUnlocked(true)
+      setPasswordError(false)
+    } else {
+      setPasswordError(true)
+    }
+  }
+
+  if (needsPassword) {
+    return (
+      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center p-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="mb-8">
+            <h1 className="text-2xl font-light text-white mb-2">{event.name}</h1>
+            <p className="text-white/40 text-sm">Esta galería está protegida con contraseña</p>
+          </div>
+          <div className="space-y-3">
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false) }}
+              onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+              placeholder="Contraseña"
+              className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-4 py-3 text-center focus:outline-none focus:border-white/50"
+              autoFocus
+            />
+            {passwordError && (
+              <p className="text-red-400 text-sm">Contraseña incorrecta</p>
+            )}
+            <button
+              onClick={handleUnlock}
+              className="w-full bg-white text-gray-900 font-medium py-3 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              Ver galería
+            </button>
+          </div>
         </div>
       </div>
     )
