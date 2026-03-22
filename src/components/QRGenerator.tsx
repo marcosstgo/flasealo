@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
 import { Download, Share2 } from 'lucide-react'
-import { Button } from './ui/Button'
-import { Card, CardContent, CardHeader } from './ui/Card'
 
 interface QRGeneratorProps {
   eventSlug: string
@@ -25,10 +23,7 @@ export function QRGenerator({ eventSlug, eventName }: QRGeneratorProps) {
       const url = await QRCode.toDataURL(uploadUrl, {
         width: 512,
         margin: 2,
-        color: {
-          dark: '#1F2937',
-          light: '#FFFFFF',
-        },
+        color: { dark: '#111111', light: '#FFFFFF' },
       })
       setQrCodeUrl(url)
     } catch (error) {
@@ -40,7 +35,6 @@ export function QRGenerator({ eventSlug, eventName }: QRGeneratorProps) {
 
   const downloadQR = () => {
     if (!qrCodeUrl) return
-
     const link = document.createElement('a')
     link.download = `flashealo-${eventSlug}-qr.png`
     link.href = qrCodeUrl
@@ -50,69 +44,52 @@ export function QRGenerator({ eventSlug, eventName }: QRGeneratorProps) {
   const shareQR = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: `QR Code for ${eventName}`,
-          text: `Scan this QR code to upload photos to ${eventName}`,
-          url: uploadUrl,
-        })
-      } catch (error) {
-        console.error('Error sharing:', error)
-      }
+        await navigator.share({ title: eventName, url: uploadUrl })
+      } catch {}
     } else {
-      // Fallback: copy to clipboard
       await navigator.clipboard.writeText(uploadUrl)
-      alert('Link copied to clipboard!')
     }
   }
 
   return (
-    <Card className="max-w-md mx-auto">
-      <CardHeader>
-        <h3 className="text-lg font-semibold text-gray-900">QR Code</h3>
-        <p className="text-sm text-gray-600">
-          Share this QR code for guests to upload photos
-        </p>
-      </CardHeader>
-      <CardContent className="text-center space-y-4">
-        {isGenerating ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+    <div className="dark:bg-white/5 bg-white dark:border dark:border-white/10 border border-gray-200 rounded-2xl p-5 dark:shadow-none shadow-sm">
+      <h3 className="font-medium dark:text-white text-gray-900 mb-1">Código QR</h3>
+      <p className="dark:text-white/40 text-gray-500 text-xs mb-4">Los invitados escanean esto para subir fotos</p>
+
+      {isGenerating ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 dark:border-white/40 border-gray-400" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex justify-center">
+            <div className="p-3 bg-white rounded-xl shadow-inner">
+              <img src={qrCodeUrl} alt="QR Code" className="w-40 h-40" />
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="inline-block p-4 bg-white rounded-xl shadow-inner">
-              <img
-                src={qrCodeUrl}
-                alt="QR Code"
-                className="w-48 h-48 mx-auto"
-              />
-            </div>
-            <div className="text-xs text-gray-500 font-mono break-all">
-              {uploadUrl}
-            </div>
-            <div className="flex gap-2 justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadQR}
-                className="flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={shareQR}
-                className="flex items-center gap-2"
-              >
-                <Share2 className="w-4 h-4" />
-                Share
-              </Button>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+
+          <p className="text-center dark:text-white/20 text-gray-400 text-xs font-mono break-all px-2">
+            {uploadUrl}
+          </p>
+
+          <div className="flex gap-2">
+            <button
+              onClick={downloadQR}
+              className="flex-1 flex items-center justify-center gap-2 dark:border dark:border-white/15 dark:text-white/50 dark:hover:text-white border border-gray-300 text-gray-500 hover:text-gray-900 text-xs py-2 rounded-xl transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Descargar
+            </button>
+            <button
+              onClick={shareQR}
+              className="flex-1 flex items-center justify-center gap-2 dark:border dark:border-white/15 dark:text-white/50 dark:hover:text-white border border-gray-300 text-gray-500 hover:text-gray-900 text-xs py-2 rounded-xl transition-colors"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              Compartir
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

@@ -1,13 +1,12 @@
 import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Eye, Download, DownloadCloud, Copy, Check, Lock, Unlock } from 'lucide-react'
-import { Button } from '../components/ui/Button'
-import { Card, CardContent, CardHeader } from '../components/ui/Card'
+import { ArrowLeft, Eye, Download, DownloadCloud, Copy, Check, Lock, Unlock, Camera } from 'lucide-react'
 import { QRGenerator } from '../components/QRGenerator'
 import { StatsDashboard } from '../components/StatsDashboard'
 import { ImageModerationQueue } from '../components/ImageModerationQueue'
 import { BulkDownloader } from '../components/BulkDownloader'
+import { ThemeToggle } from '../components/ThemeToggle'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -38,9 +37,7 @@ export function EventManagePage() {
 
   const updateEventMutation = useMutation({
     mutationFn: updateEvent,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['event', eventId] })
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['event', eventId] }),
   })
 
   async function fetchEvent(): Promise<Event> {
@@ -83,179 +80,187 @@ export function EventManagePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+      <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 dark:border-white/40 border-gray-400" />
       </div>
     )
   }
 
   if (!event || event.user_id !== user?.id) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] flex items-center justify-center px-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Evento no encontrado</h1>
-          <p className="text-gray-600 mb-4">El evento que buscas no existe o no tienes acceso a él.</p>
-          <Link to="/dashboard"><Button>Volver al Dashboard</Button></Link>
+          <h1 className="text-xl font-light dark:text-white text-gray-900 mb-2">Evento no encontrado</h1>
+          <p className="dark:text-white/40 text-gray-500 text-sm mb-6">No tienes acceso a este evento.</p>
+          <Link to="/dashboard">
+            <button className="dark:bg-white dark:text-black bg-gray-900 text-white text-sm font-medium px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity">
+              Volver al Dashboard
+            </button>
+          </Link>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] dark:text-white text-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="dark:bg-black/60 bg-[#faf9f7]/90 backdrop-blur-md border-b dark:border-white/10 border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-4">
               <Link to="/dashboard">
-                <Button variant="ghost" className="mr-4">
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
+                <button className="dark:text-white/40 dark:hover:text-white text-gray-400 hover:text-gray-700 transition-colors">
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
               </Link>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">{event.name}</h1>
-                <p className="text-sm text-gray-600">{event.is_public ? 'Evento público' : 'Evento privado'}</p>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 dark:bg-white bg-gray-900 rounded flex items-center justify-center">
+                  <Camera className="w-3.5 h-3.5 dark:text-black text-white" />
+                </div>
+                <div>
+                  <h1 className="text-sm font-medium leading-tight">{event.name}</h1>
+                  <p className="text-xs dark:text-white/30 text-gray-400">{event.is_public ? 'Evento público' : 'Evento privado'}</p>
+                </div>
               </div>
             </div>
-            <Link to={`/gallery/${event.slug}`}>
-              <Button variant="outline" size="sm">
-                <Eye className="w-4 h-4 mr-2" />
-                Ver Galería
-              </Button>
-            </Link>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <Link to={`/gallery/${event.slug}`}>
+                <button className="flex items-center gap-1.5 dark:border dark:border-white/20 dark:text-white/60 dark:hover:text-white border border-gray-300 text-gray-500 hover:text-gray-900 text-xs px-3 py-1.5 rounded-full transition-colors">
+                  <Eye className="w-3.5 h-3.5" />
+                  Ver galería
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-1 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Left column */}
+          <div className="lg:col-span-1 space-y-4">
+
+            {/* QR */}
             <QRGenerator eventSlug={event.slug} eventName={event.name} />
 
             {/* Share link */}
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold text-gray-900">Compartir Galería</h3>
-                <p className="text-sm text-gray-600">Envía este link a tus clientes</p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                  <p className="text-sm text-gray-600 flex-1 truncate">{galleryUrl}</p>
-                  <button
-                    onClick={handleCopyLink}
-                    className="flex-shrink-0 text-gray-500 hover:text-gray-900 transition-colors"
-                  >
-                    {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                </div>
-                <Button onClick={handleCopyLink} className="w-full" variant="outline" size="sm">
-                  {copied ? (
-                    <><Check className="w-4 h-4 mr-2 text-green-600" /> ¡Copiado!</>
-                  ) : (
-                    <><Copy className="w-4 h-4 mr-2" /> Copiar link</>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="dark:bg-white/5 bg-white dark:border dark:border-white/10 border border-gray-200 rounded-2xl p-5 dark:shadow-none shadow-sm">
+              <h3 className="font-medium mb-1">Compartir galería</h3>
+              <p className="dark:text-white/40 text-gray-500 text-xs mb-4">Envía este link a tus clientes</p>
+              <div className="flex items-center gap-2 dark:bg-black/30 bg-gray-50 dark:border dark:border-white/10 border border-gray-200 rounded-xl px-3 py-2 mb-3">
+                <p className="text-xs dark:text-white/50 text-gray-500 flex-1 truncate">{galleryUrl}</p>
+                <button onClick={handleCopyLink} className="flex-shrink-0 dark:text-white/40 dark:hover:text-white text-gray-400 hover:text-gray-700 transition-colors">
+                  {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+              <button
+                onClick={handleCopyLink}
+                className="w-full dark:border dark:border-white/15 dark:text-white/60 dark:hover:text-white dark:hover:border-white/30 border border-gray-300 text-gray-500 hover:text-gray-900 hover:border-gray-400 text-xs py-2 rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                {copied ? <><Check className="w-3.5 h-3.5 text-green-400" /> ¡Copiado!</> : <><Copy className="w-3.5 h-3.5" /> Copiar link</>}
+              </button>
+            </div>
 
             {/* Gallery settings */}
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold text-gray-900">Configuración de Galería</h3>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Downloads toggle */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-lg ${event.allow_downloads ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
-                      {event.allow_downloads ? <Download className="w-5 h-5" /> : <DownloadCloud className="w-5 h-5" />}
+            <div className="dark:bg-white/5 bg-white dark:border dark:border-white/10 border border-gray-200 rounded-2xl p-5 dark:shadow-none shadow-sm space-y-4">
+              <h3 className="font-medium">Configuración</h3>
+
+              {/* Downloads toggle */}
+              <div className="flex items-center justify-between p-3 dark:bg-white/5 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className={`p-1.5 rounded-lg ${event.allow_downloads ? 'bg-green-500/20 text-green-400' : 'dark:bg-white/10 bg-gray-200 dark:text-white/40 text-gray-500'}`}>
+                    {event.allow_downloads ? <Download className="w-4 h-4" /> : <DownloadCloud className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Descargas</p>
+                    <p className="text-xs dark:text-white/30 text-gray-400">
+                      {event.allow_downloads ? 'Invitados pueden descargar' : 'Solo vista'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleDownloads}
+                  disabled={updateEventMutation.isPending}
+                  className={`text-xs px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 ${
+                    event.allow_downloads
+                      ? 'dark:border dark:border-white/20 dark:text-white/50 dark:hover:text-white border border-gray-300 text-gray-500 hover:text-gray-900'
+                      : 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
+                  }`}
+                >
+                  {event.allow_downloads ? 'Desactivar' : 'Activar'}
+                </button>
+              </div>
+
+              {/* Password */}
+              <div className="p-3 dark:bg-white/5 bg-gray-50 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-1.5 rounded-lg ${event.gallery_password ? 'bg-amber-500/20 text-amber-400' : 'dark:bg-white/10 bg-gray-200 dark:text-white/40 text-gray-500'}`}>
+                      {event.gallery_password ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-900">Descargas</h4>
-                      <p className="text-sm text-gray-600">
-                        {event.allow_downloads ? 'Invitados pueden descargar' : 'Solo vista'}
+                      <p className="text-sm font-medium">Contraseña</p>
+                      <p className="text-xs dark:text-white/30 text-gray-400">
+                        {event.gallery_password ? 'Galería protegida' : 'Galería pública'}
                       </p>
                     </div>
                   </div>
-                  <Button
-                    onClick={handleToggleDownloads}
-                    isLoading={updateEventMutation.isPending}
-                    variant={event.allow_downloads ? 'outline' : 'primary'}
-                    size="sm"
-                  >
-                    {event.allow_downloads ? 'Desactivar' : 'Activar'}
-                  </Button>
+                  {event.gallery_password ? (
+                    <button
+                      onClick={handleRemovePassword}
+                      disabled={updateEventMutation.isPending}
+                      className="text-xs text-red-400 border border-red-500/30 px-3 py-1.5 rounded-full hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                    >
+                      Quitar
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setShowPasswordField(!showPasswordField)}
+                      className="text-xs dark:border dark:border-white/20 dark:text-white/50 dark:hover:text-white border border-gray-300 text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-full transition-colors"
+                    >
+                      Activar
+                    </button>
+                  )}
                 </div>
 
-                {/* Password protection */}
-                <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg ${event.gallery_password ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
-                        {event.gallery_password ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900">Contraseña</h4>
-                        <p className="text-sm text-gray-600">
-                          {event.gallery_password ? 'Galería protegida' : 'Galería pública'}
-                        </p>
-                      </div>
-                    </div>
-                    {event.gallery_password ? (
-                      <Button
-                        onClick={handleRemovePassword}
-                        isLoading={updateEventMutation.isPending}
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        Quitar
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => setShowPasswordField(!showPasswordField)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        Activar
-                      </Button>
-                    )}
+                {showPasswordField && !event.gallery_password && (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="Ej: boda2025"
+                      onKeyDown={(e) => e.key === 'Enter' && handleSetPassword()}
+                      className="flex-1 dark:bg-white/[0.07] bg-white dark:border dark:border-white/15 border border-gray-300 dark:text-white text-gray-900 dark:placeholder-white/20 placeholder-gray-400 rounded-xl px-3 py-2 text-sm focus:outline-none dark:focus:border-white/40 focus:border-gray-500 transition-colors"
+                    />
+                    <button
+                      onClick={handleSetPassword}
+                      disabled={updateEventMutation.isPending}
+                      className="dark:bg-white dark:text-black bg-gray-900 text-white text-xs font-medium px-4 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      Guardar
+                    </button>
                   </div>
+                )}
 
-                  {showPasswordField && !event.gallery_password && (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={passwordInput}
-                        onChange={(e) => setPasswordInput(e.target.value)}
-                        placeholder="Ej: boda2025"
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        onKeyDown={(e) => e.key === 'Enter' && handleSetPassword()}
-                      />
-                      <Button size="sm" onClick={handleSetPassword} isLoading={updateEventMutation.isPending}>
-                        Guardar
-                      </Button>
-                    </div>
-                  )}
-
-                  {event.gallery_password && (
-                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                      Contraseña: <strong>{event.gallery_password}</strong>
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                {event.gallery_password && (
+                  <p className="text-xs bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg px-3 py-2">
+                    Contraseña: <strong>{event.gallery_password}</strong>
+                  </p>
+                )}
+              </div>
+            </div>
 
             {/* Bulk Download */}
             <BulkDownloader eventId={event.id} eventName={event.name} eventSlug={event.slug} />
           </div>
 
-          {/* Right Column */}
-          <div className="lg:col-span-2 space-y-8">
+          {/* Right column */}
+          <div className="lg:col-span-2 space-y-6">
             <StatsDashboard eventId={event.id} />
             <ImageModerationQueue eventId={event.id} />
           </div>
