@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react'
-import { Camera, X, Check, ImageIcon } from 'lucide-react'
+import React, { useState, useRef, useEffect } from 'react'
+import { Camera, X, Check, Image as ImageIcon, AlertCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
@@ -17,29 +17,89 @@ interface UploadedFile {
   errorMessage?: string
 }
 
+interface UploadLimits {
+  allowed: boolean
+  reason?: string
+  message?: string
+  uploads_in_window?: number
+  total_uploads?: number
+  rate_limit?: number
+  total_limit?: number
+  retry_after_seconds?: number
+}
+
 export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderProps) {
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [uploaderName, setUploaderName] = useState('')
   const [hasConsented, setHasConsented] = useState(false)
   const [step, setStep] = useState<'identity' | 'upload'>('identity')
+  const [uploadLimits, setUploadLimits] = useState<UploadLimits | null>(null)
+  const [limitError, setLimitError] = useState<string | null>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
   const successCount = files.filter(f => f.status === 'success').length
   const hasErrors = files.some(f => f.status === 'error')
 
-  const handleFileSelect = (selectedFiles: FileList | null) => {
+  useEffect(() => {
+    if (step === 'upload' && uploaderName) {
+      checkUploadLimits()
+    }
+  }, [step, uploaderName, successCount])
+
+  const checkUploadLimits = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-upload`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            eventId,
+            uploaderName: uploaderName.trim(),
+          }),
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setLimitError(data.message || 'No puedes subir más fotos en este momento')
+        setUploadLimits(data)
+      } else {
+        setLimitError(null)
+        setUploadLimits(data)
+      }
+    } catch (error) {
+      console.error('Error checking limits:', error)
+    }
+  }
+
+  const calculateFileHash = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer()
+    const hashBuffer = await crypto.subtle.digest('MD5', arrayBuffer)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  const handleFileSelect = async (selectedFiles: FileList | null) => {
     if (!selectedFiles) return
+
+    if (limitError) {
+      return
+    }
 
     const newFiles: UploadedFile[] = []
 
-    Array.from(selectedFiles).forEach((file) => {
+    for (const file of Array.from(selectedFiles)) {
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif']
-      if (!validTypes.includes(file.type)) return
+      if (!validTypes.includes(file.type)) continue
 
       const maxSize = 10 * 1024 * 1024
-      if (file.size > maxSize) return
+      if (file.size > maxSize) continue
 
       newFiles.push({
         file,
@@ -47,7 +107,9 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
         id: Math.random().toString(36).substring(7),
         status: 'uploading'
       })
-    })
+    }
+
+    if (newFiles.length === 0) return
 
     setFiles(prev => [...prev, ...newFiles])
     uploadFiles(newFiles)
@@ -59,6 +121,34 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
     for (const fileItem of filesToUpload) {
       try {
         let fileToUpload = fileItem.file
+        let fileHash = ''
+
+        try {
+          fileHash = await calculateFileHash(fileItem.file)
+        } catch (hashError) {
+          console.error('Error calculating hash:', hashError)
+        }
+
+        const validationResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-upload`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              eventId,
+              uploaderName: uploaderName.trim(),
+              fileHash,
+            }),
+          }
+        )
+
+        const validationData = await validationResponse.json()
+
+        if (!validationResponse.ok || !validationData.allowed) {
+          throw new Error(validationData.message || 'No puedes subir más fotos')
+        }
 
         if (fileItem.file.type === 'image/heic' || fileItem.file.type === 'image/heif') {
           try {
@@ -67,7 +157,6 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
             const jpegBuffer = await heicConvert.default({ buffer: arrayBuffer, format: 'JPEG', quality: 0.85 })
             fileToUpload = new File([jpegBuffer], fileItem.file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' })
           } catch {
-            // Upload original if conversion fails
           }
         }
 
@@ -86,7 +175,8 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
           format: fileToUpload.type,
           size: fileToUpload.size,
           status: 'pending',
-          uploader_name: uploaderName.trim()
+          uploader_name: uploaderName.trim(),
+          file_hash: fileHash || null,
         })
 
         if (dbError) {
@@ -94,13 +184,32 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
           throw new Error(dbError.message)
         }
 
+        if (fileHash) {
+          await supabase.from('photo_hashes').insert({
+            photo_id: null,
+            file_hash: fileHash,
+            event_id: eventId,
+          })
+        }
+
+        await supabase.rpc('increment_upload_count', {
+          p_event_id: eventId,
+          p_uploader_name: uploaderName.trim(),
+        })
+
         setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: 'success' } : f))
       } catch (error: any) {
         setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: 'error', errorMessage: error.message } : f))
+
+        if (error.message.includes('límite') || error.message.includes('limite')) {
+          setLimitError(error.message)
+          await checkUploadLimits()
+        }
       }
     }
 
     setIsUploading(false)
+    await checkUploadLimits()
   }
 
   const removeFile = (id: string) => {
@@ -190,6 +299,37 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
         )}
       </div>
 
+      {/* Upload limits info */}
+      {uploadLimits && uploadLimits.allowed && (
+        <div className="px-6 py-3 bg-white/[0.03] border-b border-white/[0.06] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="text-white/40 text-xs">
+              {uploadLimits.total_uploads || 0} / {uploadLimits.total_limit || 50} fotos
+            </div>
+            <div className="w-1 h-1 rounded-full bg-white/20" />
+            <div className="text-white/40 text-xs">
+              {uploadLimits.uploads_in_window || 0} / {uploadLimits.rate_limit || 10} últimos 5 min
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Limit error banner */}
+      {limitError && (
+        <div className="mx-4 mt-4 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-red-400 text-sm font-medium mb-1">Límite alcanzado</p>
+            <p className="text-red-400/80 text-xs leading-relaxed">{limitError}</p>
+            {uploadLimits?.retry_after_seconds && (
+              <p className="text-red-400/60 text-xs mt-2">
+                Podrás subir más en {Math.ceil(uploadLimits.retry_after_seconds / 60)} minutos
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Hidden inputs */}
       <input
         ref={cameraInputRef}
@@ -213,7 +353,7 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
       <div className="flex flex-col border-b border-white/[0.06]" style={{ minHeight: '40vh' }}>
         <button
           onClick={() => cameraInputRef.current?.click()}
-          disabled={isUploading}
+          disabled={isUploading || !!limitError}
           className="flex-1 flex flex-col items-center justify-center gap-5 border-b border-white/[0.06] hover:bg-white/[0.04] active:bg-white/[0.07] transition-colors group disabled:opacity-40"
         >
           <div className="w-16 h-16 bg-white/[0.07] group-hover:bg-white/[0.12] border border-white/10 rounded-full flex items-center justify-center transition-colors">
@@ -227,7 +367,7 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
 
         <button
           onClick={() => galleryInputRef.current?.click()}
-          disabled={isUploading}
+          disabled={isUploading || !!limitError}
           className="flex-1 flex flex-col items-center justify-center gap-5 hover:bg-white/[0.04] active:bg-white/[0.07] transition-colors group disabled:opacity-40"
         >
           <div className="w-16 h-16 bg-white/[0.07] group-hover:bg-white/[0.12] border border-white/10 rounded-full flex items-center justify-center transition-colors">
