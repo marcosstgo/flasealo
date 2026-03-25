@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Eye, Download, DownloadCloud, Copy, Check, Lock, Unlock, Camera } from 'lucide-react'
+import { ArrowLeft, Eye, Download, DownloadCloud, Copy, Check, Lock, Unlock, Camera, Shield, ShieldCheck } from 'lucide-react'
 import { QRGenerator } from '../components/QRGenerator'
 import { StatsDashboard } from '../components/StatsDashboard'
 import { ImageModerationQueue } from '../components/ImageModerationQueue'
@@ -19,6 +19,7 @@ interface Event {
   user_id: string
   allow_downloads: boolean
   gallery_password: string | null
+  auto_approve: boolean
 }
 
 export function EventManagePage() {
@@ -76,6 +77,11 @@ export function EventManagePage() {
   const handleRemovePassword = () => {
     updateEventMutation.mutate({ gallery_password: null })
     setShowPasswordField(false)
+  }
+
+  const handleToggleAutoApprove = () => {
+    if (!event) return
+    updateEventMutation.mutate({ auto_approve: !event.auto_approve })
   }
 
   if (isLoading) {
@@ -168,6 +174,32 @@ export function EventManagePage() {
             {/* Gallery settings */}
             <div className="dark:bg-white/5 bg-white dark:border dark:border-white/10 border border-gray-200 rounded-2xl p-5 dark:shadow-none shadow-sm space-y-4">
               <h3 className="font-medium">Configuración</h3>
+
+              {/* Auto-approve toggle */}
+              <div className="flex items-center justify-between p-3 dark:bg-white/5 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className={`p-1.5 rounded-lg ${event.auto_approve ? 'bg-blue-500/20 text-blue-400' : 'dark:bg-white/10 bg-gray-200 dark:text-white/40 text-gray-500'}`}>
+                    {event.auto_approve ? <ShieldCheck className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Auto-aprobar</p>
+                    <p className="text-xs dark:text-white/30 text-gray-400">
+                      {event.auto_approve ? 'Fotos se publican al instante' : 'Requiere tu aprobación'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleAutoApprove}
+                  disabled={updateEventMutation.isPending}
+                  className={`text-xs px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 ${
+                    event.auto_approve
+                      ? 'dark:border dark:border-white/20 dark:text-white/50 dark:hover:text-white border border-gray-300 text-gray-500 hover:text-gray-900'
+                      : 'bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30'
+                  }`}
+                >
+                  {event.auto_approve ? 'Desactivar' : 'Activar'}
+                </button>
+              </div>
 
               {/* Downloads toggle */}
               <div className="flex items-center justify-between p-3 dark:bg-white/5 bg-gray-50 rounded-xl">

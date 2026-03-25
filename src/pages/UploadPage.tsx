@@ -10,6 +10,7 @@ interface Event {
   name: string
   description: string | null
   slug: string
+  auto_approve: boolean
 }
 
 export function UploadPage() {
@@ -74,7 +75,7 @@ export function UploadPage() {
         </div>
       </header>
 
-      <PhotoUploader eventId={event.id} eventSlug={event.slug} eventName={event.name} />
+      <PhotoUploader eventId={event.id} eventSlug={event.slug} eventName={event.name} autoApprove={event.auto_approve} />
     </div>
   )
 }

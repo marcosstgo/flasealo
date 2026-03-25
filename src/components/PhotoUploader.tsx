@@ -7,6 +7,7 @@ interface PhotoUploaderProps {
   eventId: string
   eventSlug: string
   eventName: string
+  autoApprove?: boolean
 }
 
 interface UploadedFile {
@@ -28,7 +29,7 @@ interface UploadLimits {
   retry_after_seconds?: number
 }
 
-export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderProps) {
+export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = false }: PhotoUploaderProps) {
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [uploaderName, setUploaderName] = useState('')
@@ -174,7 +175,7 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
           image_path: uploadData.path,
           format: fileToUpload.type,
           size: fileToUpload.size,
-          status: 'pending',
+          status: autoApprove ? 'approved' : 'pending',
           uploader_name: uploaderName.trim(),
           file_hash: fileHash || null,
         }).select().single()
@@ -458,7 +459,11 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
 
       {/* Bottom: gallery link */}
       <div className="mt-auto p-6 text-center">
-        <p className="text-white/20 text-xs mb-3">Las fotos se revisan antes de aparecer en la galería</p>
+        <p className="text-white/20 text-xs mb-3">
+          {autoApprove
+            ? 'Tus fotos aparecerán inmediatamente en la galería'
+            : 'Las fotos se revisan antes de aparecer en la galería'}
+        </p>
         <Link to={`/gallery/${eventSlug}`}>
           <button className="text-white/30 hover:text-white/60 text-sm transition-colors">
             Ver galería del evento →
