@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Camera, ArrowLeft, Heart, Download, Upload } from 'lucide-react'
+import { Camera, ArrowLeft, Heart, Download, Upload, Search } from 'lucide-react'
 import { PhotoViewer } from '../components/PhotoViewer'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { FilterBar, DateFilter, SortOrder } from '../components/FilterBar'
 import { supabase } from '../lib/supabase'
 
 interface Event {
@@ -33,6 +34,10 @@ export function GalleryPage() {
   const [passwordInput, setPasswordInput] = useState('')
   const [unlocked, setUnlocked] = useState(false)
   const [passwordError, setPasswordError] = useState(false)
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
 
   const { data: event, isLoading: eventLoading } = useQuery({
     queryKey: ['event-by-slug', eventSlug],
@@ -132,6 +137,61 @@ export function GalleryPage() {
     setViewerOpen(true)
   }
 
+  const filteredAndSortedPhotos = useMemo(() => {
+    if (!photos) return []
+
+    let filtered = [...photos]
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      filtered = filtered.filter((photo) =>
+        photo.uploader_name?.toLowerCase().includes(query)
+      )
+    }
+
+    if (dateFilter !== 'all') {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+      filtered = filtered.filter((photo) => {
+        const photoDate = new Date(photo.created_at)
+
+        switch (dateFilter) {
+          case 'today':
+            return photoDate >= today
+          case 'week':
+            const weekAgo = new Date(today)
+            weekAgo.setDate(weekAgo.getDate() - 7)
+            return photoDate >= weekAgo
+          case 'month':
+            const monthAgo = new Date(today)
+            monthAgo.setMonth(monthAgo.getMonth() - 1)
+            return photoDate >= monthAgo
+          default:
+            return true
+        }
+      })
+    }
+
+    switch (sortOrder) {
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        break
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        break
+      case 'name':
+        filtered.sort((a, b) => {
+          const nameA = a.uploader_name?.toLowerCase() || 'zzz'
+          const nameB = b.uploader_name?.toLowerCase() || 'zzz'
+          return nameA.localeCompare(nameB)
+        })
+        break
+    }
+
+    return filtered
+  }, [photos, searchQuery, dateFilter, sortOrder])
+
   if (eventLoading) {
     return (
       <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] flex items-center justify-center">
@@ -224,8 +284,10 @@ export function GalleryPage() {
             </div>
             <div className="flex items-center space-x-3">
               <ThemeToggle />
-              <Heart className="w-4 h-4 dark:text-white/30 text-gray-400" />
-              <span className="text-sm dark:text-white/40 text-gray-500">{photos?.length || 0} fotos</span>
+              <div className="hidden sm:flex items-center space-x-3">
+                <Heart className="w-4 h-4 dark:text-white/30 text-gray-400" />
+                <span className="text-sm dark:text-white/40 text-gray-500">{photos?.length || 0} fotos</span>
+              </div>
               {!event.allow_downloads && (
                 <span className="text-xs dark:bg-white/10 dark:text-white/50 bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
                   Solo vista
@@ -255,6 +317,20 @@ export function GalleryPage() {
         )}
       </section>
 
+      {/* Filter Bar */}
+      {photos && photos.length > 0 && (
+        <FilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          dateFilter={dateFilter}
+          onDateFilterChange={setDateFilter}
+          sortOrder={sortOrder}
+          onSortOrderChange={setSortOrder}
+          totalPhotos={photos.length}
+          filteredCount={filteredAndSortedPhotos.length}
+        />
+      )}
+
       {/* Photo Grid */}
       <section className="pb-20 px-2 sm:px-4">
         <div className="max-w-7xl mx-auto">
@@ -274,13 +350,36 @@ export function GalleryPage() {
                 Las fotos aparecerán aquí una vez que los invitados las suban y sean aprobadas.
               </p>
             </div>
+          ) : filteredAndSortedPhotos.length === 0 ? (
+            <div className="text-center py-24">
+              <div className="mx-auto w-16 h-16 dark:bg-white/5 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Search className="w-8 h-8 dark:text-white/20 text-gray-300" />
+              </div>
+              <h3 className="text-lg font-medium dark:text-white/50 text-gray-500 mb-2">No se encontraron fotos</h3>
+              <p className="dark:text-white/30 text-gray-400 text-sm mb-6">
+                Intenta ajustar los filtros de búsqueda
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setDateFilter('all')
+                  setSortOrder('newest')
+                }}
+                className="dark:border dark:border-white/20 dark:text-white/60 dark:hover:text-white border border-gray-300 text-gray-500 hover:text-gray-900 px-6 py-2.5 rounded-full transition-colors text-sm"
+              >
+                Limpiar filtros
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
-              {photos.map((photo, index) => (
+              {filteredAndSortedPhotos.map((photo, index) => (
                 <div
                   key={photo.id}
                   className="group relative aspect-square overflow-hidden cursor-pointer dark:bg-white/5 bg-gray-200"
-                  onClick={() => openPhotoViewer(index)}
+                  onClick={() => {
+                    const originalIndex = photos.findIndex(p => p.id === photo.id)
+                    openPhotoViewer(originalIndex)
+                  }}
                 >
                   <img
                     src={getThumbnailUrl(photo)}
