@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Camera, QrCode, Shield, Download, Check } from 'lucide-react'
+import { Camera, QrCode, Shield, Download, Check, Search, Zap, Lock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ThemeToggle } from '../components/ThemeToggle'
 
@@ -137,12 +137,12 @@ export function HomePage() {
               {
                 title: 'Quinceañeras',
                 desc: 'Familiares y amigos comparten su perspectiva única del momento.',
-                img: '/quinceanera copy.jpg'
+                img: '/quinceanera.jpg'
               },
               {
                 title: 'Festivales y corporativos',
                 desc: 'Cientos de personas, cientos de ángulos. Una sola galería.',
-                img: '/Festival copy.jpg'
+                img: '/Festival.jpg'
               }
             ].map((item) => (
               <div key={item.title} className="group relative aspect-[4/5] overflow-hidden rounded-2xl">
@@ -179,8 +179,13 @@ export function HomePage() {
               },
               {
                 icon: Shield,
-                title: 'Moderación completa',
-                desc: 'Aprueba o rechaza cada foto antes de que aparezca en la galería. Aprueba todas de un golpe o una a una.'
+                title: 'Moderación inteligente',
+                desc: 'Aprueba o rechaza cada foto, o activa auto-aprobación para eventos sin moderación. Con protección anti-spam incluida.'
+              },
+              {
+                icon: Search,
+                title: 'Búsqueda avanzada',
+                desc: 'Encuentra fotos rápidamente por nombre del invitado, fecha o estado. Filtra y organiza con facilidad.'
               },
               {
                 icon: Download,
@@ -188,9 +193,14 @@ export function HomePage() {
                 desc: 'Todas las fotos aprobadas en un ZIP con un click. Listo para subir a Pixieset o entregar al cliente.'
               },
               {
-                icon: Camera,
-                title: 'Galería para el cliente',
-                desc: 'El cliente recibe un link elegante para ver las fotos. Con contraseña si lo prefieres.'
+                icon: Lock,
+                title: 'Galería protegida',
+                desc: 'El cliente recibe un link elegante para ver las fotos. Con contraseña opcional para mayor privacidad.'
+              },
+              {
+                icon: Zap,
+                title: 'Carga ultrarrápida',
+                desc: 'Sistema optimizado con miniaturas automáticas. Galerías con cientos de fotos se cargan al instante.'
               }
             ].map((feature) => (
               <div key={feature.title} className="dark:bg-white/5 bg-[#faf9f7] p-10 flex gap-5">
