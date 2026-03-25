@@ -1,23 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { 
-  Users, 
-  Calendar, 
-  Camera, 
-  Settings, 
-  LogOut, 
-  Shield, 
-  Eye, 
-  Edit,
-  Trash2,
-  Search,
-  AlertTriangle,
-  Info,
-  UserCheck,
-  UserX,
-  Mail
-} from 'lucide-react'
+import { Users, Calendar, Camera, Settings, LogOut, Shield, Eye, CreditCard as Edit, Trash2, Search, AlertTriangle, Info, UserCheck, UserX, Mail, HardDrive } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card, CardContent, CardHeader } from '../components/ui/Card'
@@ -29,6 +13,7 @@ interface AdminStats {
   totalEvents: number
   totalPhotos: number
   pendingPhotos: number
+  storageUsedGB: number
 }
 
 interface EventWithUser {
@@ -163,7 +148,7 @@ export function AdminDashboardPage() {
       const [usersResult, eventsResult, photosResult] = await Promise.all([
         supabase.from('user_roles').select('*', { count: 'exact' }),
         supabase.from('events').select('*', { count: 'exact' }),
-        supabase.from('photos').select('status', { count: 'exact' })
+        supabase.from('photos').select('status, file_size', { count: 'exact' })
       ])
 
       const totalUsers = usersResult.count || 0
@@ -171,11 +156,15 @@ export function AdminDashboardPage() {
       const totalPhotos = photosResult.count || 0
       const pendingPhotos = photosResult.data?.filter(p => p.status === 'pending').length || 0
 
+      const totalBytes = photosResult.data?.reduce((sum, photo) => sum + (photo.file_size || 0), 0) || 0
+      const storageUsedGB = parseFloat((totalBytes / (1024 * 1024 * 1024)).toFixed(2))
+
       return {
         totalUsers,
         totalEvents,
         totalPhotos,
-        pendingPhotos
+        pendingPhotos,
+        storageUsedGB
       }
     } catch (error) {
       console.error('Error fetching admin stats:', error)
@@ -183,7 +172,8 @@ export function AdminDashboardPage() {
         totalUsers: 0,
         totalEvents: 0,
         totalPhotos: 0,
-        pendingPhotos: 0
+        pendingPhotos: 0,
+        storageUsedGB: 0
       }
     }
   }
@@ -340,34 +330,48 @@ export function AdminDashboardPage() {
     }
   }
 
+  const storagePercentage = stats ? ((stats.storageUsedGB / 100) * 100).toFixed(1) : '0.0'
+
   const statCards = [
     {
       title: 'Total Usuarios',
       value: stats?.totalUsers || 0,
       icon: Users,
       color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
+      bgColor: 'bg-blue-100',
+      displayValue: stats?.totalUsers || 0
     },
     {
       title: 'Total Eventos',
       value: stats?.totalEvents || 0,
       icon: Calendar,
       color: 'text-green-600',
-      bgColor: 'bg-green-100'
+      bgColor: 'bg-green-100',
+      displayValue: stats?.totalEvents || 0
     },
     {
       title: 'Total Fotos',
       value: stats?.totalPhotos || 0,
       icon: Camera,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-100',
+      displayValue: stats?.totalPhotos || 0
     },
     {
       title: 'Fotos Pendientes',
       value: stats?.pendingPhotos || 0,
       icon: Settings,
       color: 'text-orange-600',
-      bgColor: 'bg-orange-100'
+      bgColor: 'bg-orange-100',
+      displayValue: stats?.pendingPhotos || 0
+    },
+    {
+      title: 'Almacenamiento',
+      value: stats?.storageUsedGB || 0,
+      icon: HardDrive,
+      color: parseFloat(storagePercentage) > 80 ? 'text-red-600' : parseFloat(storagePercentage) > 60 ? 'text-amber-600' : 'text-emerald-600',
+      bgColor: parseFloat(storagePercentage) > 80 ? 'bg-red-100' : parseFloat(storagePercentage) > 60 ? 'bg-amber-100' : 'bg-emerald-100',
+      displayValue: `${stats?.storageUsedGB || 0} GB`
     }
   ]
 
@@ -483,27 +487,79 @@ export function AdminDashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {statCards.map((stat, index) => (
-                  <Card key={index} className="hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {statCards.slice(0, 4).map((stat, index) => (
+                    <Card key={index} className="hover:shadow-lg transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600 mb-1">
+                              {stat.title}
+                            </p>
+                            <p className="text-2xl font-bold text-gray-900">
+                              {stat.displayValue}
+                            </p>
+                          </div>
+                          <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                            <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Storage Card - Full Width */}
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-3 rounded-full ${statCards[4].bgColor}`}>
+                          <HardDrive className={`w-6 h-6 ${statCards[4].color}`} />
+                        </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-600 mb-1">
-                            {stat.title}
+                          <p className="text-sm font-medium text-gray-600">
+                            {statCards[4].title}
                           </p>
                           <p className="text-2xl font-bold text-gray-900">
-                            {stat.value}
+                            {statCards[4].displayValue} / 100 GB
                           </p>
                         </div>
-                        <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                          <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">
+                          {storagePercentage}% utilizado
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {(100 - (stats?.storageUsedGB || 0)).toFixed(2)} GB disponibles
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 rounded-full ${
+                          parseFloat(storagePercentage) > 80
+                            ? 'bg-red-600'
+                            : parseFloat(storagePercentage) > 60
+                            ? 'bg-amber-500'
+                            : 'bg-emerald-500'
+                        }`}
+                        style={{ width: `${Math.min(parseFloat(storagePercentage), 100)}%` }}
+                      />
+                    </div>
+
+                    {parseFloat(storagePercentage) > 80 && (
+                      <p className="text-xs text-red-600 mt-2 flex items-center">
+                        <AlertTriangle className="w-3 h-3 mr-1" />
+                        Espacio de almacenamiento bajo. Considera eliminar fotos antiguas.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
             )}
 
             {/* Admin Features */}
