@@ -295,7 +295,7 @@ export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = fal
             Continuar
           </button>
 
-          <p className="text-white/20 text-xs text-center">HEIC · JPG · PNG · máx 10 MB por foto</p>
+          <p className="text-white/20 text-xs text-center">HEIC · HEIF · JPG · PNG · máx 10 MB por foto</p>
         </div>
       </div>
     )
@@ -354,7 +354,7 @@ export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = fal
       <input
         ref={cameraInputRef}
         type="file"
-        accept="image/heic,image/jpeg,image/jpg,image/png"
+        accept="image/heic,image/heif,image/jpeg,image/jpg,image/png"
         capture="environment"
         multiple
         onChange={(e) => handleFileSelect(e.target.files)}
@@ -363,7 +363,7 @@ export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = fal
       <input
         ref={galleryInputRef}
         type="file"
-        accept="image/heic,image/jpeg,image/jpg,image/png"
+        accept="image/heic,image/heif,image/jpeg,image/jpg,image/png"
         multiple
         onChange={(e) => handleFileSelect(e.target.files)}
         className="hidden"
