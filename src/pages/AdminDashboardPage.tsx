@@ -97,6 +97,7 @@ export function AdminDashboardPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] })
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['pending-approvals'] })
       setDeletingUserId(null)
     },
     onError: (error) => {
@@ -461,15 +462,27 @@ export function AdminDashboardPage() {
                           Registrado {new Date(u.created_at).toLocaleDateString('es-PR', { day: 'numeric', month: 'long', year: 'numeric' })}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => updateEventPermissionMutation.mutate({ userId: u.id, canCreateEvent: true })}
-                        isLoading={updateEventPermissionMutation.isPending}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <UserCheck className="w-4 h-4 mr-2" />
-                        Aprobar
-                      </Button>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteUser(u.id, u.email)}
+                          isLoading={deletingUserId === u.id}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <UserX className="w-4 h-4 mr-2" />
+                          Rechazar y Eliminar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => updateEventPermissionMutation.mutate({ userId: u.id, canCreateEvent: true })}
+                          isLoading={updateEventPermissionMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <UserCheck className="w-4 h-4 mr-2" />
+                          Aprobar
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </CardContent>
