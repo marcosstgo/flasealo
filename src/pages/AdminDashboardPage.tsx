@@ -148,7 +148,7 @@ export function AdminDashboardPage() {
       const [usersResult, eventsResult, photosResult] = await Promise.all([
         supabase.from('user_roles').select('*', { count: 'exact' }),
         supabase.from('events').select('*', { count: 'exact' }),
-        supabase.from('photos').select('status, file_size', { count: 'exact' })
+        supabase.from('photos').select('status, size', { count: 'exact' })
       ])
 
       const totalUsers = usersResult.count || 0
@@ -156,7 +156,7 @@ export function AdminDashboardPage() {
       const totalPhotos = photosResult.count || 0
       const pendingPhotos = photosResult.data?.filter(p => p.status === 'pending').length || 0
 
-      const totalBytes = photosResult.data?.reduce((sum, photo) => sum + (photo.file_size || 0), 0) || 0
+      const totalBytes = photosResult.data?.reduce((sum, photo) => sum + (photo.size || 0), 0) || 0
       const storageUsedGB = parseFloat((totalBytes / (1024 * 1024 * 1024)).toFixed(2))
 
       return {
