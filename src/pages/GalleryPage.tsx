@@ -19,6 +19,7 @@ interface Event {
 interface Photo {
   id: string
   image_path: string
+  thumbnail_url: string | null
   created_at: string
   format: string
   size: number
@@ -102,6 +103,11 @@ export function GalleryPage() {
     if (imagePath.startsWith('https://')) return imagePath
     const { data } = supabase.storage.from('event-photos').getPublicUrl(imagePath)
     return data.publicUrl
+  }
+
+  const getThumbnailUrl = (photo: Photo) => {
+    if (photo.thumbnail_url) return photo.thumbnail_url
+    return getImageUrl(photo.image_path)
   }
 
   const downloadImage = async (imageUrl: string, photoId: string) => {
@@ -277,7 +283,7 @@ export function GalleryPage() {
                   onClick={() => openPhotoViewer(index)}
                 >
                   <img
-                    src={getImageUrl(photo.image_path)}
+                    src={getThumbnailUrl(photo)}
                     alt="Foto del evento"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"

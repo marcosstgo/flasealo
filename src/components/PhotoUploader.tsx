@@ -169,7 +169,7 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
         if (uploadError) throw new Error(uploadError.message)
         if (!uploadData?.path) throw new Error('No se recibió la ruta del archivo')
 
-        const { error: dbError } = await supabase.from('photos').insert({
+        const { data: photoData, error: dbError } = await supabase.from('photos').insert({
           event_id: eventId,
           image_path: uploadData.path,
           format: fileToUpload.type,
@@ -177,12 +177,31 @@ export function PhotoUploader({ eventId, eventSlug, eventName }: PhotoUploaderPr
           status: 'pending',
           uploader_name: uploaderName.trim(),
           file_hash: fileHash || null,
-        })
+        }).select().single()
 
         if (dbError) {
           await supabase.storage.from('event-photos').remove([uploadData.path])
           throw new Error(dbError.message)
         }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('event-photos')
+          .getPublicUrl(uploadData.path)
+
+        fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-thumbnail`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              photoId: photoData.id,
+              imageUrl: publicUrl,
+            }),
+          }
+        ).catch(err => console.error('Thumbnail generation failed:', err))
 
         if (fileHash) {
           await supabase.from('photo_hashes').insert({
