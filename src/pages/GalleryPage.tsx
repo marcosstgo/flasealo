@@ -14,7 +14,7 @@ interface Event {
   slug: string
   is_public: boolean
   allow_downloads: boolean
-  gallery_password: string | null
+  has_password: boolean
 }
 
 interface Photo {
@@ -62,19 +62,19 @@ export function GalleryPage() {
         slug: 'demo-event',
         is_public: true,
         allow_downloads: true,
-        gallery_password: null,
+        has_password: false,
       }
     }
 
     const { data, error } = await supabase
       .from('events')
-      .select('*')
+      .select('id, name, description, slug, is_public, allow_downloads, gallery_password')
       .eq('slug', eventSlug)
       .eq('is_public', true)
       .single()
 
     if (error) throw error
-    return data
+    return { ...data, has_password: !!data.gallery_password, gallery_password: undefined }
   }
 
   async function fetchApprovedPhotos(): Promise<Photo[]> {
@@ -95,7 +95,7 @@ export function GalleryPage() {
 
     const { data, error } = await supabase
       .from('photos')
-      .select('*')
+      .select('id, image_path, thumbnail_url, created_at, format, size, uploader_name')
       .eq('event_id', event.id)
       .eq('status', 'approved')
       .order('created_at', { ascending: false })
@@ -222,13 +222,29 @@ export function GalleryPage() {
   }
 
   // Password gate
-  const needsPassword = event?.gallery_password && eventSlug !== 'demo-event' && !unlocked
+  const needsPassword = event?.has_password && eventSlug !== 'demo-event' && !unlocked
 
-  const handleUnlock = () => {
-    if (passwordInput === event?.gallery_password) {
-      setUnlocked(true)
-      setPasswordError(false)
-    } else {
+  const handleUnlock = async () => {
+    if (!eventSlug || !passwordInput) return
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const res = await fetch(`${supabaseUrl}/functions/v1/verify-gallery-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ eventSlug, password: passwordInput }),
+      })
+      const { valid } = await res.json()
+      if (valid) {
+        setUnlocked(true)
+        setPasswordError(false)
+      } else {
+        setPasswordError(true)
+      }
+    } catch {
       setPasswordError(true)
     }
   }
@@ -246,7 +262,7 @@ export function GalleryPage() {
               type="password"
               value={passwordInput}
               onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false) }}
-              onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleUnlock() }}
               placeholder="Contraseña"
               className="w-full dark:bg-white/10 bg-gray-100 dark:border dark:border-white/20 border border-gray-300 dark:text-white text-gray-900 dark:placeholder-white/30 placeholder-gray-400 rounded-lg px-4 py-3 text-center focus:outline-none dark:focus:border-white/50 focus:border-gray-500 transition-colors"
               autoFocus

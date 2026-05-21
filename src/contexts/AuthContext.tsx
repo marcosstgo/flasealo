@@ -59,23 +59,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
 
-    // Get initial session
     const getInitialSession = async () => {
       try {
-        console.log('Getting initial session...')
         const { data: { session }, error } = await supabase.auth.getSession()
-        
+
         if (error) {
           console.error('Error getting session:', error)
-        } else {
-          console.log('Initial session:', session?.user?.email || 'No session')
         }
-        
+
         if (mounted) {
           setSession(session)
           setUser(session?.user ?? null)
-          
-          // Get user permissions if user exists
+
           if (session?.user) {
             try {
               const [role, canCreate] = await Promise.all([
@@ -84,14 +79,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               ])
               setUserRole(role)
               setCanCreateEvents(canCreate)
-              console.log('User permissions:', { role, canCreate })
             } catch (roleError) {
               console.error('Error getting user permissions:', roleError)
               setUserRole('user')
               setCanCreateEvents(false)
             }
           }
-          
+
           setLoading(false)
         }
       } catch (error) {
@@ -107,42 +101,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email || 'No user')
-      
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (mounted) {
         setSession(session)
         setUser(session?.user ?? null)
-        
-        // Get user permissions when user signs in
+
         if (session?.user && event === 'SIGNED_IN') {
-          try {
-            // Add a small delay to ensure the trigger has run
-            setTimeout(async () => {
-              try {
-                const [role, canCreate] = await Promise.all([
-                  getCurrentUserRole(),
-                  canCurrentUserCreateEvents()
-                ])
-                setUserRole(role)
-                setCanCreateEvents(canCreate)
-                console.log('User permissions after sign in:', { role, canCreate })
-              } catch (roleError) {
-                console.error('Error getting user permissions on auth change:', roleError)
-                setUserRole('user')
-                setCanCreateEvents(false)
-              }
-            }, 1000)
-          } catch (roleError) {
-            console.error('Error setting up permissions fetch:', roleError)
-            setUserRole('user')
-            setCanCreateEvents(false)
-          }
+          setTimeout(async () => {
+            try {
+              const [role, canCreate] = await Promise.all([
+                getCurrentUserRole(),
+                canCurrentUserCreateEvents()
+              ])
+              setUserRole(role)
+              setCanCreateEvents(canCreate)
+            } catch (roleError) {
+              console.error('Error getting user permissions on auth change:', roleError)
+              setUserRole('user')
+              setCanCreateEvents(false)
+            }
+          }, 1000)
         } else if (!session?.user) {
           setUserRole('user')
           setCanCreateEvents(false)
         }
-        
+
         setLoading(false)
       }
     })
@@ -155,8 +138,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
-      console.log('Signing up user:', email)
-      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -164,9 +145,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailRedirectTo: `${window.location.origin}/dashboard`
         }
       })
-      
-      console.log('Sign up result:', { data, error })
-      
       return { data, error }
     } catch (error) {
       console.error('Error in signUp:', error)
@@ -176,15 +154,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('Signing in user:', email)
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-      
-      console.log('Sign in result:', { data, error })
-      
       return { data, error }
     } catch (error) {
       console.error('Error in signIn:', error)
@@ -194,7 +167,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      console.log('Signing out user')
       await supabase.auth.signOut()
       setUserRole('user')
       setCanCreateEvents(false)

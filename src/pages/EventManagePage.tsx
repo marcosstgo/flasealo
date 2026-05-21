@@ -43,7 +43,12 @@ export function EventManagePage() {
 
   async function fetchEvent(): Promise<Event> {
     if (!eventId) throw new Error('Event ID is required')
-    const { data, error } = await supabase.from('events').select('*').eq('id', eventId).single()
+    const { data, error } = await supabase
+      .from('events')
+      .select('id, name, description, is_public, slug, user_id, allow_downloads, gallery_password, auto_approve')
+      .eq('id', eventId)
+      .eq('user_id', user?.id ?? '')
+      .single()
     if (error) throw error
     return data
   }
@@ -281,7 +286,7 @@ export function EventManagePage() {
 
                 {event.gallery_password && (
                   <p className="text-xs bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg px-3 py-2">
-                    Contraseña: <strong>{event.gallery_password}</strong>
+                    Contraseña activa: <strong>{'•'.repeat(event.gallery_password.length)}</strong>
                   </p>
                 )}
               </div>
