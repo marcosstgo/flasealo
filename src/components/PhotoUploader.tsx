@@ -94,13 +94,24 @@ export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = fal
     }
 
     const newFiles: UploadedFile[] = []
+    let rejectedCount = 0
+    let rejectedReason = ''
 
     for (const file of Array.from(selectedFiles)) {
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif']
-      if (!validTypes.includes(file.type)) continue
-
       const maxSize = 10 * 1024 * 1024
-      if (file.size > maxSize) continue
+
+      if (file.size > maxSize) {
+        rejectedCount++
+        rejectedReason = 'size'
+        continue
+      }
+
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif', 'image/webp']
+      if (file.type && !validTypes.includes(file.type)) {
+        rejectedCount++
+        if (!rejectedReason) rejectedReason = 'type'
+        continue
+      }
 
       newFiles.push({
         file,
@@ -108,6 +119,15 @@ export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = fal
         id: Math.random().toString(36).substring(7),
         status: 'uploading'
       })
+    }
+
+    if (rejectedCount > 0) {
+      const plural = rejectedCount > 1
+      const msg = rejectedReason === 'size'
+        ? `${rejectedCount} foto${plural ? 's' : ''} ${plural ? 'superan' : 'supera'} los 10 MB y no ${plural ? 'se subieron' : 'se subió'}`
+        : `${rejectedCount} foto${plural ? 's' : ''} no ${plural ? 'son compatibles' : 'es compatible'} con el formato`
+      setError(msg)
+      setTimeout(() => setError(null), 6000)
     }
 
     if (newFiles.length === 0) return
@@ -357,7 +377,7 @@ export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = fal
         accept="image/heic,image/heif,image/jpeg,image/jpg,image/png"
         capture="environment"
         multiple
-        onChange={(e) => handleFileSelect(e.target.files)}
+        onChange={(e) => { handleFileSelect(e.target.files); e.target.value = '' }}
         className="hidden"
       />
       <input
@@ -365,7 +385,7 @@ export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = fal
         type="file"
         accept="image/heic,image/heif,image/jpeg,image/jpg,image/png"
         multiple
-        onChange={(e) => handleFileSelect(e.target.files)}
+        onChange={(e) => { handleFileSelect(e.target.files); e.target.value = '' }}
         className="hidden"
       />
 
