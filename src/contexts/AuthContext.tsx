@@ -184,6 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut()
       setUserRole('user')
       setCanCreateEvents(false)
+      setTrialInfo(null)
     } catch (error) {
       console.error('Error in signOut:', error)
       throw error

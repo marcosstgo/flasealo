@@ -204,11 +204,11 @@ export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = fal
           }
         ).catch(err => console.error('Thumbnail generation failed:', err))
 
-        if (fileHash) {
-          await supabase.from('photo_hashes').insert({
-            photo_id: null,
-            file_hash: fileHash,
-            event_id: eventId,
+        if (fileHash && photoData?.id) {
+          await supabase.rpc('record_photo_hash', {
+            p_event_id: eventId,
+            p_file_hash: fileHash,
+            p_photo_id: photoData.id,
           })
         }
 

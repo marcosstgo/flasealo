@@ -286,7 +286,7 @@ export function EventManagePage() {
 
                 {event.gallery_password && (
                   <p className="text-xs bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg px-3 py-2">
-                    Contraseña activa: <strong>{'•'.repeat(event.gallery_password.length)}</strong>
+                    Contraseña activa: <strong>••••••••</strong>
                   </p>
                 )}
               </div>

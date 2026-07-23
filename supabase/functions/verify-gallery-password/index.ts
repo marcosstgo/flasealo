@@ -26,27 +26,24 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const { data: event, error } = await supabase
-      .from('events')
-      .select('gallery_password')
-      .eq('slug', eventSlug)
-      .eq('is_public', true)
-      .maybeSingle()
+    // Uses pgcrypto crypt() comparison server-side — constant-time, no plaintext exposure
+    const { data: valid, error } = await supabase.rpc('verify_gallery_password', {
+      p_slug: eventSlug,
+      p_password: password,
+    })
 
-    if (error || !event) {
+    if (error) {
       return new Response(
         JSON.stringify({ valid: false }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    const valid = event.gallery_password === password
-
     return new Response(
-      JSON.stringify({ valid }),
+      JSON.stringify({ valid: valid === true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-  } catch (err) {
+  } catch {
     return new Response(
       JSON.stringify({ valid: false, error: 'Internal error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

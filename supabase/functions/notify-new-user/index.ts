@@ -1,8 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const ADMIN_EMAIL = 'hello@marcossantiago.com'
-const ADMIN_URL = 'https://flashealo.com/admin'
-
 Deno.serve(async (req) => {
   try {
     const payload = await req.json()
@@ -12,7 +9,6 @@ Deno.serve(async (req) => {
       return new Response('No user_id in payload', { status: 400 })
     }
 
-    // Get the new user's email from auth.users
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -24,6 +20,9 @@ Deno.serve(async (req) => {
       return new Response('User not found', { status: 404 })
     }
 
+    const adminEmail = Deno.env.get('ADMIN_NOTIFICATION_EMAIL') ?? 'hello@marcossantiago.com'
+    const adminUrl   = Deno.env.get('ADMIN_URL') ?? 'https://flashealo.com/admin'
+
     const userEmail = user.email || 'Email desconocido'
     const registeredAt = new Date(user.created_at).toLocaleString('es-PR', {
       timeZone: 'America/Puerto_Rico',
@@ -31,7 +30,6 @@ Deno.serve(async (req) => {
       timeStyle: 'short',
     })
 
-    // Send email via Resend
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (!resendKey) {
       console.error('RESEND_API_KEY not set')
@@ -46,7 +44,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: 'Flashealo <onboarding@resend.dev>',
-        to: ADMIN_EMAIL,
+        to: adminEmail,
         subject: `Nuevo usuario en Flashealo: ${userEmail}`,
         html: `
           <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
@@ -58,7 +56,7 @@ Deno.serve(async (req) => {
               <p style="margin: 0; color: #888; font-size: 14px;">Registrado: ${registeredAt}</p>
             </div>
 
-            <a href="${ADMIN_URL}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+            <a href="${adminUrl}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
               Ir al panel de admin
             </a>
 

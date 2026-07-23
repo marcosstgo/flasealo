@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,27 +14,64 @@ interface ThumbnailRequest {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
+    // Require a valid Authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { photoId, imageUrl }: ThumbnailRequest = await req.json();
 
     if (!photoId || !imageUrl) {
       return new Response(
         JSON.stringify({ error: "Missing photoId or imageUrl" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Only allow fetching from this project's own Supabase storage (SSRF prevention)
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const allowedHostname = new URL(supabaseUrl).hostname;
+
+    let parsedImageUrl: URL;
+    try {
+      parsedImageUrl = new URL(imageUrl);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid imageUrl" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (parsedImageUrl.hostname !== allowedHostname) {
+      return new Response(JSON.stringify({ error: "imageUrl must point to project storage" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Verify the photoId exists in the DB before processing
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data: photo, error: photoError } = await supabase
+      .from("photos")
+      .select("id")
+      .eq("id", photoId)
+      .maybeSingle();
+
+    if (photoError || !photo) {
+      return new Response(JSON.stringify({ error: "Photo not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
@@ -45,10 +83,7 @@ Deno.serve(async (req: Request) => {
 
     const canvas = new OffscreenCanvas(800, 600);
     const ctx = canvas.getContext("2d");
-
-    if (!ctx) {
-      throw new Error("Could not get canvas context");
-    }
+    if (!ctx) throw new Error("Could not get canvas context");
 
     const imageBitmap = await createImageBitmap(new Blob([arrayBuffer]));
 
@@ -64,13 +99,9 @@ Deno.serve(async (req: Request) => {
 
     canvas.width = targetWidth;
     canvas.height = targetHeight;
-
     ctx.drawImage(imageBitmap, 0, 0, targetWidth, targetHeight);
 
-    const thumbnailBlob = await canvas.convertToBlob({
-      type: "image/jpeg",
-      quality: 0.7,
-    });
+    const thumbnailBlob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.7 });
 
     const originalPath = imageUrl.split("/").pop()?.split("?")[0] || "";
     const thumbnailPath = `thumbnails/${originalPath}`;
@@ -87,9 +118,7 @@ Deno.serve(async (req: Request) => {
       }
     );
 
-    if (!uploadResponse.ok) {
-      throw new Error("Failed to upload thumbnail");
-    }
+    if (!uploadResponse.ok) throw new Error("Failed to upload thumbnail");
 
     const thumbnailUrl = `${supabaseUrl}/storage/v1/object/public/photos/${thumbnailPath}`;
 
@@ -106,24 +135,17 @@ Deno.serve(async (req: Request) => {
       }
     );
 
-    if (!updateResponse.ok) {
-      throw new Error("Failed to update photo record");
-    }
+    if (!updateResponse.ok) throw new Error("Failed to update photo record");
 
     return new Response(
       JSON.stringify({ success: true, thumbnailUrl }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Thumbnail generation error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to generate thumbnail" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ error: "Failed to generate thumbnail" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
