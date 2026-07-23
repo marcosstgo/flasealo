@@ -255,7 +255,8 @@ export function HomePage() {
             <span className="dark:text-white/60 text-gray-500 text-sm">Flashealo.com</span>
           </div>
           <p className="dark:text-white/20 text-gray-400 text-sm">© 2025 Flashealo. Todos los derechos reservados.</p>
-          <div className="flex gap-6">
+          <div className="flex items-center gap-6">
+            <span className="dark:text-white/15 text-gray-300 text-xs font-mono">v{__APP_VERSION__}</span>
             <Link to="/login" className="dark:text-white/30 dark:hover:text-white/60 text-gray-400 hover:text-gray-600 text-sm transition-colors">Iniciar sesión</Link>
             <Link to="/signup" className="dark:text-white/30 dark:hover:text-white/60 text-gray-400 hover:text-gray-600 text-sm transition-colors">Registrarse</Link>
             <Link to="/gallery/demo-event" className="dark:text-white/30 dark:hover:text-white/60 text-gray-400 hover:text-gray-600 text-sm transition-colors">Demo</Link>

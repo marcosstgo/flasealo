@@ -413,6 +413,9 @@ export function DashboardPage() {
           </div>
         )}
       </main>
+      <footer className="max-w-7xl mx-auto px-6 pb-8 flex justify-end">
+        <span className="dark:text-white/15 text-gray-300 text-xs font-mono">v{__APP_VERSION__}</span>
+      </footer>
     </div>
   )
 }
