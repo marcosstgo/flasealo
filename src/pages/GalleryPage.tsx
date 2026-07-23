@@ -72,18 +72,6 @@ export function GalleryPage() {
   async function fetchEventBySlug(): Promise<Event> {
     if (!eventSlug) throw new Error('Event slug is required')
 
-    if (eventSlug === 'demo-event') {
-      return {
-        id: 'demo-id',
-        name: 'Boda de María y Carlos',
-        description: 'Celebrando nuestro amor con familia y amigos en este día especial',
-        slug: 'demo-event',
-        is_public: true,
-        allow_downloads: true,
-        has_password: false,
-      }
-    }
-
     const { data, error } = await supabase
       .from('events')
       .select('id, name, description, slug, is_public, allow_downloads, gallery_password')
@@ -97,7 +85,6 @@ export function GalleryPage() {
 
   async function fetchApprovedPhotos(): Promise<Photo[]> {
     if (!event?.id) return []
-    if (event.id === 'demo-id') return DEMO_PHOTOS
 
     const { data, error } = await supabase
       .from('photos')
@@ -107,6 +94,8 @@ export function GalleryPage() {
       .order('created_at', { ascending: false })
 
     if (error) throw error
+
+    if (data.length === 0 && eventSlug === 'demo-event') return DEMO_PHOTOS
     return data
   }
 
