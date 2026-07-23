@@ -15,6 +15,7 @@ const UploadPage = lazy(() => import('./pages/UploadPage').then(m => ({ default:
 const GalleryPage = lazy(() => import('./pages/GalleryPage').then(m => ({ default: m.GalleryPage })))
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })))
+const FeaturesPage = lazy(() => import('./pages/FeaturesPage').then(m => ({ default: m.FeaturesPage })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,6 +97,7 @@ function App() {
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/features" element={<FeaturesPage />} />
               <Route path="/upload/:eventSlug" element={<UploadPage />} />
               <Route path="/gallery/:eventSlug" element={<GalleryPage />} />
               <Route
