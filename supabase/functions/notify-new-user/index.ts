@@ -20,8 +20,8 @@ Deno.serve(async (req) => {
       return new Response('User not found', { status: 404 })
     }
 
-    const adminEmail = Deno.env.get('ADMIN_NOTIFICATION_EMAIL') ?? 'hello@marcossantiago.com'
-    const adminUrl   = Deno.env.get('ADMIN_URL') ?? 'https://flashealo.com/admin'
+    const adminEmail = 'hello@marcossantiago.com'
+    const adminUrl   = 'https://flashealo.com/admin'
 
     const userEmail = user.email || 'Email desconocido'
     const registeredAt = new Date(user.created_at).toLocaleString('es-PR', {
