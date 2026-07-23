@@ -1,8 +1,23 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Camera, QrCode, Shield, Download, Check, Search, Zap, Lock, ArrowRight } from 'lucide-react'
+import { Camera, QrCode, Shield, Download, Check, Search, Zap, Lock, ArrowRight, Sparkles } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ThemeToggle } from '../components/ThemeToggle'
+
+const PREVIEW_PHOTOS = [
+  { id: '1', src: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Ana' },
+  { id: '2', src: 'https://images.pexels.com/photos/1729931/pexels-photo-1729931.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Carlos' },
+  { id: '3', src: 'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg?auto=compress&cs=tinysrgb&w=600', name: null },
+  { id: '4', src: 'https://images.pexels.com/photos/1024960/pexels-photo-1024960.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'María' },
+  { id: '5', src: 'https://images.pexels.com/photos/1729797/pexels-photo-1729797.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Pedro' },
+  { id: '6', src: 'https://images.pexels.com/photos/1444424/pexels-photo-1444424.jpeg?auto=compress&cs=tinysrgb&w=600', name: null },
+  { id: '7', src: 'https://images.pexels.com/photos/1729799/pexels-photo-1729799.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Laura' },
+  { id: '8', src: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Sofía' },
+  { id: '9', src: 'https://images.pexels.com/photos/3014853/pexels-photo-3014853.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Diego' },
+  { id: '10', src: 'https://images.pexels.com/photos/1128318/pexels-photo-1128318.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Valeria' },
+  { id: '11', src: 'https://images.pexels.com/photos/931177/pexels-photo-931177.jpeg?auto=compress&cs=tinysrgb&w=600', name: null },
+  { id: '12', src: 'https://images.pexels.com/photos/1616113/pexels-photo-1616113.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Rodrigo' },
+]
 
 export function HomePage() {
   const { user } = useAuth()
@@ -127,8 +142,75 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* Live Gallery Preview */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 border-t dark:border-white/8 border-gray-100">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 gap-4">
+            <div>
+              <p className="dark:text-white/30 text-gray-400 text-xs tracking-widest uppercase mb-3 flex items-center gap-2">
+                <Sparkles className="w-3 h-3" />
+                Vista previa
+              </p>
+              <h2 className="text-3xl md:text-4xl font-light">Así se ve la galería<br />
+                <span className="dark:text-white/40 text-gray-400">de tus invitados</span>
+              </h2>
+            </div>
+            <Link to="/gallery/demo-event">
+              <button className="group flex items-center gap-2 dark:border dark:border-white/20 dark:text-white/60 dark:hover:text-white dark:hover:border-white/40 border border-gray-300 text-gray-500 hover:text-gray-900 hover:border-gray-400 px-5 py-2.5 rounded-full transition-all text-sm whitespace-nowrap">
+                Ver galería completa
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </Link>
+          </div>
+
+          {/* Masonry preview grid */}
+          <div className="columns-2 sm:columns-3 lg:columns-4 gap-2 md:gap-3">
+            {PREVIEW_PHOTOS.map((photo, index) => (
+              <div
+                key={photo.id}
+                className="break-inside-avoid mb-2 md:mb-3 group relative overflow-hidden rounded-xl md:rounded-2xl cursor-pointer"
+                style={{
+                  opacity: 0,
+                  animation: 'fadeSlideUp 0.45s ease forwards',
+                  animationDelay: `${index * 50}ms`,
+                }}
+              >
+                <Link to="/gallery/demo-event">
+                  <img
+                    src={photo.src}
+                    alt="Vista previa galería"
+                    className="w-full h-auto block transition-transform duration-500 group-hover:scale-[1.04]"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 rounded-xl md:rounded-2xl" />
+                  {photo.name && (
+                    <div className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 bg-gradient-to-t from-black/60 to-transparent px-3 pb-3 pt-8 rounded-b-xl md:rounded-b-2xl">
+                      <p className="text-white/90 text-xs font-medium">{photo.name}</p>
+                    </div>
+                  )}
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats strip */}
+          <div className="mt-12 grid grid-cols-3 gap-px dark:bg-white/8 bg-gray-200 rounded-2xl overflow-hidden">
+            {[
+              { value: '2 min', label: 'para crear un evento' },
+              { value: '0 apps', label: 'los invitados no instalan nada' },
+              { value: '100%', label: 'de las fotos en un ZIP' },
+            ].map((stat) => (
+              <div key={stat.value} className="dark:bg-[#0a0a0a] bg-[#f8f7f5] px-6 py-8 text-center">
+                <p className="text-2xl md:text-3xl font-light dark:text-white text-gray-900 mb-1">{stat.value}</p>
+                <p className="dark:text-white/30 text-gray-400 text-xs">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Events showcase */}
-      <section className="py-20 px-6">
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-3 gap-4">
             {[
