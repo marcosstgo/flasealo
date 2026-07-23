@@ -1,10 +1,14 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Camera, QrCode, Shield, Download, Check, Search, Zap, Lock, ArrowRight, Sparkles } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { supabase } from '../lib/supabase'
 
-const PREVIEW_PHOTOS = [
+const DEMO_EVENT_SLUG = 'demo-event'
+
+const FALLBACK_PHOTOS = [
   { id: '1', src: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Ana' },
   { id: '2', src: 'https://images.pexels.com/photos/1729931/pexels-photo-1729931.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Carlos' },
   { id: '3', src: 'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg?auto=compress&cs=tinysrgb&w=600', name: null },
@@ -19,8 +23,41 @@ const PREVIEW_PHOTOS = [
   { id: '12', src: 'https://images.pexels.com/photos/1616113/pexels-photo-1616113.jpeg?auto=compress&cs=tinysrgb&w=600', name: 'Rodrigo' },
 ]
 
+async function fetchDemoPhotos() {
+  const { data: event } = await supabase
+    .from('events')
+    .select('id')
+    .eq('slug', DEMO_EVENT_SLUG)
+    .maybeSingle()
+
+  if (!event) return []
+
+  const { data: photos } = await supabase
+    .from('photos')
+    .select('id, image_path, uploader_name')
+    .eq('event_id', event.id)
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false })
+
+  if (!photos || photos.length === 0) return []
+
+  return photos.map((p) => ({
+    id: p.id,
+    src: supabase.storage.from('event-photos').getPublicUrl(p.image_path).data.publicUrl,
+    name: p.uploader_name ?? null,
+  }))
+}
+
 export function HomePage() {
   const { user } = useAuth()
+
+  const { data: demoPhotos } = useQuery({
+    queryKey: ['demo-preview-photos'],
+    queryFn: fetchDemoPhotos,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const previewPhotos = demoPhotos && demoPhotos.length >= 4 ? demoPhotos : FALLBACK_PHOTOS
 
   return (
     <div className="min-h-screen dark:bg-[#0d0d0d] bg-[#faf9f7] dark:text-white text-gray-900">
@@ -165,7 +202,7 @@ export function HomePage() {
 
           {/* Masonry preview grid */}
           <div className="columns-2 sm:columns-3 lg:columns-4 gap-2 md:gap-3">
-            {PREVIEW_PHOTOS.map((photo, index) => (
+            {previewPhotos.map((photo, index) => (
               <div
                 key={photo.id}
                 className="break-inside-avoid mb-2 md:mb-3 group relative overflow-hidden rounded-xl md:rounded-2xl cursor-pointer"
