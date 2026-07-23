@@ -2,12 +2,21 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase, getCurrentUserRole, canCurrentUserCreateEvents } from '../lib/supabase'
 
+interface TrialInfo {
+  in_trial: boolean
+  trial_ends_at: string | null
+  days_remaining: number
+  trial_expired: boolean
+  has_permanent_access: boolean
+}
+
 interface AuthContextType {
   user: User | null
   session: Session | null
   userRole: 'user' | 'admin'
   isAdmin: boolean
   canCreateEvents: boolean
+  trialInfo: TrialInfo | null
   loading: boolean
   signUp: (email: string, password: string) => Promise<any>
   signIn: (email: string, password: string) => Promise<any>
@@ -23,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [userRole, setUserRole] = useState<'user' | 'admin'>('user')
   const [canCreateEvents, setCanCreateEvents] = useState(false)
+  const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null)
   const [loading, setLoading] = useState(true)
 
   const isAdmin = userRole === 'admin'
@@ -42,12 +52,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshPermissions = async () => {
     if (user) {
       try {
-        const [role, canCreate] = await Promise.all([
+        const [role, canCreate, trialData] = await Promise.all([
           getCurrentUserRole(),
-          canCurrentUserCreateEvents()
+          canCurrentUserCreateEvents(),
+          supabase.rpc('get_trial_info'),
         ])
         setUserRole(role)
         setCanCreateEvents(canCreate)
+        if (trialData.data && !trialData.error) {
+          setTrialInfo(trialData.data as TrialInfo)
+        }
       } catch (error) {
         console.error('Error refreshing permissions:', error)
         setUserRole('user')
@@ -182,6 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userRole,
     isAdmin,
     canCreateEvents,
+    trialInfo,
     loading,
     signUp,
     signIn,

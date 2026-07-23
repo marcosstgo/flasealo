@@ -392,10 +392,7 @@ export function GalleryPage() {
                 <div
                   key={photo.id}
                   className="group relative aspect-square overflow-hidden cursor-pointer dark:bg-white/5 bg-gray-200"
-                  onClick={() => {
-                    const originalIndex = photos.findIndex(p => p.id === photo.id)
-                    openPhotoViewer(originalIndex)
-                  }}
+                  onClick={() => openPhotoViewer(index)}
                 >
                   <img
                     src={getThumbnailUrl(photo)}
@@ -451,9 +448,9 @@ export function GalleryPage() {
       )}
 
       {/* Photo Viewer */}
-      {photos && (
+      {filteredAndSortedPhotos.length > 0 && (
         <PhotoViewer
-          photos={photos}
+          photos={filteredAndSortedPhotos}
           currentIndex={currentPhotoIndex}
           isOpen={viewerOpen}
           onClose={() => setViewerOpen(false)}

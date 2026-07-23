@@ -27,7 +27,7 @@ interface DashboardStats {
 }
 
 export function DashboardPage() {
-  const { user, isAdmin, canCreateEvents, signOut } = useAuth()
+  const { user, isAdmin, canCreateEvents, trialInfo, signOut } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null)
@@ -210,24 +210,93 @@ export function DashboardPage() {
 
       <main className="max-w-7xl mx-auto px-6 py-12">
 
-        {/* Permission notice */}
-        {!canCreateEvents && !isAdmin && (
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 mb-10 flex items-start gap-4">
-            <Lock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-amber-200 font-medium mb-1">Cuenta pendiente de aprobación</p>
-              <p className="text-amber-200/60 text-sm mb-3">
-                Necesitas autorización para crear eventos. Puedes gestionar los existentes normalmente.
-              </p>
-              <button
-                onClick={() => window.location.href = 'mailto:hello@marcossantiago.com?subject=Solicitud de permisos para crear eventos'}
-                className="text-amber-300 text-sm border border-amber-500/30 px-4 py-1.5 rounded-full hover:bg-amber-500/10 transition-colors"
-              >
-                Solicitar acceso
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Trial / permission notice */}
+        {!isAdmin && (() => {
+          if (trialInfo?.in_trial) {
+            const urgent = trialInfo.days_remaining <= 3
+            return (
+              <div className={`rounded-2xl p-5 mb-10 flex items-start gap-4 ${
+                urgent
+                  ? 'bg-red-500/10 border border-red-500/20'
+                  : 'bg-blue-500/10 border border-blue-500/20'
+              }`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  urgent ? 'bg-red-500/20' : 'bg-blue-500/20'
+                }`}>
+                  <span className={`text-sm font-bold ${urgent ? 'text-red-300' : 'text-blue-300'}`}>
+                    {trialInfo.days_remaining}
+                  </span>
+                </div>
+                <div>
+                  <p className={`font-medium mb-0.5 ${urgent ? 'dark:text-red-300 text-red-600' : 'dark:text-blue-300 text-blue-600'}`}>
+                    {urgent
+                      ? `Tu período de prueba termina en ${trialInfo.days_remaining} día${trialInfo.days_remaining !== 1 ? 's' : ''}`
+                      : `Período de prueba — ${trialInfo.days_remaining} días restantes`}
+                  </p>
+                  <p className={`text-sm ${urgent ? 'dark:text-red-300/60 text-red-500/80' : 'dark:text-blue-300/60 text-blue-500/80'}`}>
+                    {urgent
+                      ? 'Contáctanos para continuar usando la plataforma después del período de prueba.'
+                      : 'Estás en el plan de prueba gratuito. Crea y gestiona eventos sin restricciones durante este período.'}
+                  </p>
+                  {urgent && (
+                    <button
+                      onClick={() => window.location.href = 'mailto:hello@marcossantiago.com?subject=Renovación de cuenta Flashealo'}
+                      className={`mt-2 text-sm border px-4 py-1.5 rounded-full transition-colors ${
+                        urgent
+                          ? 'dark:text-red-300 dark:border-red-500/30 dark:hover:bg-red-500/10 text-red-600 border-red-400/40 hover:bg-red-500/10'
+                          : 'dark:text-blue-300 dark:border-blue-500/30 dark:hover:bg-blue-500/10 text-blue-600 border-blue-400/40 hover:bg-blue-500/10'
+                      }`}
+                    >
+                      Contactar soporte
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          }
+
+          if (trialInfo?.trial_expired && !trialInfo.has_permanent_access) {
+            return (
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 mb-10 flex items-start gap-4">
+                <Lock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="dark:text-amber-200 text-amber-700 font-medium mb-1">Período de prueba finalizado</p>
+                  <p className="dark:text-amber-200/60 text-amber-600/80 text-sm mb-3">
+                    Tu prueba gratuita ha terminado. Contacta con nosotros para activar tu cuenta y seguir creando eventos.
+                  </p>
+                  <button
+                    onClick={() => window.location.href = 'mailto:hello@marcossantiago.com?subject=Activación de cuenta Flashealo'}
+                    className="dark:text-amber-300 text-amber-700 text-sm border dark:border-amber-500/30 border-amber-500/40 px-4 py-1.5 rounded-full dark:hover:bg-amber-500/10 hover:bg-amber-500/10 transition-colors"
+                  >
+                    Activar cuenta
+                  </button>
+                </div>
+              </div>
+            )
+          }
+
+          if (!canCreateEvents) {
+            return (
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 mb-10 flex items-start gap-4">
+                <Lock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="dark:text-amber-200 text-amber-700 font-medium mb-1">Cuenta pendiente de aprobación</p>
+                  <p className="dark:text-amber-200/60 text-amber-600/80 text-sm mb-3">
+                    Necesitas autorización para crear eventos. Puedes gestionar los existentes normalmente.
+                  </p>
+                  <button
+                    onClick={() => window.location.href = 'mailto:hello@marcossantiago.com?subject=Solicitud de permisos para crear eventos'}
+                    className="dark:text-amber-300 text-amber-700 text-sm border dark:border-amber-500/30 border-amber-500/40 px-4 py-1.5 rounded-full dark:hover:bg-amber-500/10 hover:bg-amber-500/10 transition-colors"
+                  >
+                    Solicitar acceso
+                  </button>
+                </div>
+              </div>
+            )
+          }
+
+          return null
+        })()}
 
         {/* Stats */}
         {stats && !statsLoading && (
@@ -271,7 +340,9 @@ export function DashboardPage() {
             <p className="dark:text-white/30 text-gray-400 mb-6">
               {canCreateEvents || isAdmin
                 ? 'Crea tu primer evento para comenzar'
-                : 'Una vez aprobado podrás crear eventos'}
+                : trialInfo?.trial_expired
+                  ? 'Activa tu cuenta para poder crear eventos'
+                  : 'Una vez aprobado podrás crear eventos'}
             </p>
             {(canCreateEvents || isAdmin) && (
               <Link to="/create-event">

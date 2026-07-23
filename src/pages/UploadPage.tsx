@@ -24,7 +24,11 @@ export function UploadPage() {
 
   async function fetchEventBySlug(): Promise<Event> {
     if (!eventSlug) throw new Error('Event slug is required')
-    const { data, error } = await supabase.from('events').select('*').eq('slug', eventSlug).single()
+    const { data, error } = await supabase
+      .from('events')
+      .select('id, name, description, slug, auto_approve')
+      .eq('slug', eventSlug)
+      .single()
     if (error) throw error
     return data
   }

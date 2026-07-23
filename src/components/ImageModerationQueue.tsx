@@ -110,13 +110,19 @@ export function ImageModerationQueue({ eventId }: ImageModerationQueueProps) {
   async function deletePhoto(photoId: string) {
     const { data: photo, error: fetchError } = await supabase
       .from('photos')
-      .select('image_path')
+      .select('image_path, thumbnail_url')
       .eq('id', photoId)
       .single()
 
     if (fetchError) throw fetchError
 
-    await supabase.storage.from('event-photos').remove([photo.image_path])
+    const pathsToRemove = [photo.image_path]
+    if (photo.thumbnail_url) {
+      // thumbnail_url is a full public URL; extract the storage path after the bucket prefix
+      const match = photo.thumbnail_url.match(/event-photos\/(.+)$/)
+      if (match) pathsToRemove.push(match[1])
+    }
+    await supabase.storage.from('event-photos').remove(pathsToRemove)
 
     const { error: dbError } = await supabase
       .from('photos')
