@@ -6,6 +6,7 @@ import { QRGenerator } from '../components/QRGenerator'
 import { StatsDashboard } from '../components/StatsDashboard'
 import { ImageModerationQueue } from '../components/ImageModerationQueue'
 import { BulkDownloader } from '../components/BulkDownloader'
+import { OrganizerPhotoUploader } from '../components/OrganizerPhotoUploader'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -299,6 +300,7 @@ export function EventManagePage() {
           {/* Right column */}
           <div className="lg:col-span-2 space-y-6">
             <StatsDashboard eventId={event.id} />
+            <OrganizerPhotoUploader eventId={event.id} eventSlug={event.slug} />
             <ImageModerationQueue eventId={event.id} />
           </div>
         </div>
