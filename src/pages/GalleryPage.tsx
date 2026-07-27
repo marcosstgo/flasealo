@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Camera, ArrowLeft, Heart, Download, Upload, Search, Images } from 'lucide-react'
+import { Camera, ArrowLeft, Heart, Download, Upload, Search, Images, Trophy, Gift } from 'lucide-react'
 import { PhotoViewer } from '../components/PhotoViewer'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { FilterBar, DateFilter, SortOrder } from '../components/FilterBar'
@@ -15,6 +15,9 @@ interface Event {
   is_public: boolean
   allow_downloads: boolean
   has_password: boolean
+  raffle_enabled: boolean
+  raffle_winner_name: string | null
+  raffle_drawn_at: string | null
 }
 
 interface Photo {
@@ -74,7 +77,7 @@ export function GalleryPage() {
 
     const { data, error } = await supabase
       .from('events')
-      .select('id, name, description, slug, is_public, allow_downloads, gallery_password')
+      .select('id, name, description, slug, is_public, allow_downloads, gallery_password, raffle_enabled, raffle_winner_name, raffle_drawn_at')
       .eq('slug', eventSlug)
       .eq('is_public', true)
       .single()
@@ -352,6 +355,33 @@ export function GalleryPage() {
           totalPhotos={photos.length}
           filteredCount={filteredAndSortedPhotos.length}
         />
+      )}
+
+      {/* Raffle banner / winner */}
+      {!isDemo && event.raffle_enabled && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+          {event.raffle_drawn_at && event.raffle_winner_name ? (
+            <div className="flex items-center gap-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl px-5 py-4">
+              <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center shrink-0">
+                <Trophy className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-xs text-amber-400 font-medium uppercase tracking-widest mb-0.5">Ganador del sorteo</p>
+                <p className="text-lg font-medium dark:text-white text-gray-900">{event.raffle_winner_name}</p>
+                <p className="text-xs dark:text-white/30 text-gray-400">
+                  Sorteado el {new Date(event.raffle_drawn_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 bg-amber-500/8 border border-amber-500/20 rounded-2xl px-5 py-3.5">
+              <Gift className="w-4 h-4 text-amber-400 shrink-0" />
+              <p className="text-sm dark:text-white/60 text-gray-600">
+                <span className="text-amber-400 font-medium">Sorteo activo</span> — cada foto subida es una entrada. ¡Más fotos, más posibilidades de ganar!
+              </p>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Demo notice */}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Camera, X, Check, Image as ImageIcon, AlertCircle } from 'lucide-react'
+import { Camera, X, Check, Image as ImageIcon, AlertCircle, Ticket } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
@@ -8,6 +8,7 @@ interface PhotoUploaderProps {
   eventSlug: string
   eventName: string
   autoApprove?: boolean
+  raffleEnabled?: boolean
 }
 
 interface UploadedFile {
@@ -29,7 +30,7 @@ interface UploadLimits {
   retry_after_seconds?: number
 }
 
-export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = false }: PhotoUploaderProps) {
+export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = false, raffleEnabled = false }: PhotoUploaderProps) {
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [uploaderName, setUploaderName] = useState('')
@@ -331,12 +332,20 @@ export function PhotoUploader({ eventId, eventSlug, eventName, autoApprove = fal
           <p className="text-white/30 text-xs">Subiendo como</p>
           <p className="text-white font-medium">{uploaderName}</p>
         </div>
-        {successCount > 0 && (
-          <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1">
-            <Check className="w-3.5 h-3.5 text-green-400" />
-            <span className="text-green-400 text-xs font-medium">{successCount} enviada{successCount !== 1 ? 's' : ''}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {successCount > 0 && (
+            <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1">
+              <Check className="w-3.5 h-3.5 text-green-400" />
+              <span className="text-green-400 text-xs font-medium">{successCount} enviada{successCount !== 1 ? 's' : ''}</span>
+            </div>
+          )}
+          {raffleEnabled && uploadLimits && (uploadLimits.total_uploads ?? 0) > 0 && (
+            <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 rounded-full px-3 py-1">
+              <Ticket className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-amber-400 text-xs font-medium">{uploadLimits.total_uploads} entrada{(uploadLimits.total_uploads ?? 0) !== 1 ? 's' : ''}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Upload limits info */}

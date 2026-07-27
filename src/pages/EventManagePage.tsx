@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Eye, Download, DownloadCloud, Copy, Check, Lock, Unlock, Camera, Shield, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Eye, Download, DownloadCloud, Copy, Check, Lock, Unlock, Camera, Shield, ShieldCheck, Gift, Trophy, Sparkles, Shuffle } from 'lucide-react'
 import { QRGenerator } from '../components/QRGenerator'
 import { StatsDashboard } from '../components/StatsDashboard'
 import { ImageModerationQueue } from '../components/ImageModerationQueue'
@@ -21,6 +21,11 @@ interface Event {
   allow_downloads: boolean
   gallery_password: string | null
   auto_approve: boolean
+  raffle_enabled: boolean
+  raffle_prize: string | null
+  raffle_winner_name: string | null
+  raffle_winner_photo_id: string | null
+  raffle_drawn_at: string | null
 }
 
 export function EventManagePage() {
@@ -30,6 +35,9 @@ export function EventManagePage() {
   const [copied, setCopied] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
   const [showPasswordField, setShowPasswordField] = useState(false)
+  const [prizeInput, setPrizeInput] = useState('')
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [drawError, setDrawError] = useState<string | null>(null)
 
   const { data: event, isLoading } = useQuery({
     queryKey: ['event', eventId],
@@ -46,7 +54,7 @@ export function EventManagePage() {
     if (!eventId) throw new Error('Event ID is required')
     const { data, error } = await supabase
       .from('events')
-      .select('id, name, description, is_public, slug, user_id, allow_downloads, gallery_password, auto_approve')
+      .select('id, name, description, is_public, slug, user_id, allow_downloads, gallery_password, auto_approve, raffle_enabled, raffle_prize, raffle_winner_name, raffle_winner_photo_id, raffle_drawn_at')
       .eq('id', eventId)
       .eq('user_id', user?.id ?? '')
       .single()
@@ -88,6 +96,54 @@ export function EventManagePage() {
   const handleToggleAutoApprove = () => {
     if (!event) return
     updateEventMutation.mutate({ auto_approve: !event.auto_approve })
+  }
+
+  const handleToggleRaffle = () => {
+    if (!event) return
+    updateEventMutation.mutate({ raffle_enabled: !event.raffle_enabled })
+  }
+
+  const handleSavePrize = () => {
+    if (!prizeInput.trim()) return
+    updateEventMutation.mutate({ raffle_prize: prizeInput.trim() })
+    setPrizeInput('')
+  }
+
+  const handleDraw = async () => {
+    if (!eventId) return
+    setIsDrawing(true)
+    setDrawError(null)
+    try {
+      const { data, error } = await supabase
+        .from('photos')
+        .select('id, uploader_name')
+        .eq('event_id', eventId)
+        .eq('status', 'approved')
+        .not('uploader_name', 'is', null)
+      if (error) throw error
+      if (!data || data.length === 0) {
+        setDrawError('No hay fotos aprobadas para realizar el sorteo.')
+        return
+      }
+      const winner = data[Math.floor(Math.random() * data.length)]
+      await updateEventMutation.mutateAsync({
+        raffle_winner_name: winner.uploader_name,
+        raffle_winner_photo_id: winner.id,
+        raffle_drawn_at: new Date().toISOString(),
+      })
+    } catch {
+      setDrawError('Ocurrió un error al realizar el sorteo. Intenta de nuevo.')
+    } finally {
+      setIsDrawing(false)
+    }
+  }
+
+  const handleResetDraw = () => {
+    updateEventMutation.mutate({
+      raffle_winner_name: null,
+      raffle_winner_photo_id: null,
+      raffle_drawn_at: null,
+    })
   }
 
   if (isLoading) {
@@ -291,6 +347,127 @@ export function EventManagePage() {
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Raffle (Sorteo) */}
+            <div className="dark:bg-white/5 bg-white dark:border dark:border-white/10 border border-gray-200 rounded-2xl p-5 dark:shadow-none shadow-sm space-y-4">
+              <div className="flex items-center gap-2">
+                <Gift className="w-4 h-4 dark:text-white/40 text-gray-400" />
+                <h3 className="font-medium">Sorteo</h3>
+                {event.raffle_enabled && !event.raffle_drawn_at && (
+                  <span className="ml-auto text-xs bg-amber-500/15 text-amber-500 border border-amber-500/25 px-2 py-0.5 rounded-full">Activo</span>
+                )}
+                {event.raffle_drawn_at && (
+                  <span className="ml-auto text-xs bg-green-500/15 text-green-400 border border-green-500/25 px-2 py-0.5 rounded-full">Finalizado</span>
+                )}
+              </div>
+
+              {/* Toggle */}
+              <div className="flex items-center justify-between p-3 dark:bg-white/5 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className={`p-1.5 rounded-lg ${
+                    event.raffle_enabled
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'dark:bg-white/10 bg-gray-200 dark:text-white/40 text-gray-500'
+                  }`}>
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Modo sorteo</p>
+                    <p className="text-xs dark:text-white/30 text-gray-400">
+                      {event.raffle_enabled ? 'Cada foto = 1 entrada' : 'Sin sorteo activo'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleRaffle}
+                  disabled={updateEventMutation.isPending || !!event.raffle_drawn_at}
+                  className={`text-xs px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 ${
+                    event.raffle_enabled
+                      ? 'dark:border dark:border-white/20 dark:text-white/50 dark:hover:text-white border border-gray-300 text-gray-500 hover:text-gray-900'
+                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30'
+                  }`}
+                >
+                  {event.raffle_enabled ? 'Desactivar' : 'Activar'}
+                </button>
+              </div>
+
+              {/* Prize */}
+              {event.raffle_enabled && (
+                <div className="space-y-2">
+                  <p className="text-xs dark:text-white/40 text-gray-500 px-1">Premio</p>
+                  {event.raffle_prize ? (
+                    <div className="flex items-center gap-2 p-3 dark:bg-white/5 bg-gray-50 rounded-xl">
+                      <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
+                      <p className="text-sm flex-1 dark:text-white/80 text-gray-700">{event.raffle_prize}</p>
+                      {!event.raffle_drawn_at && (
+                        <button
+                          onClick={() => updateEventMutation.mutate({ raffle_prize: null })}
+                          className="text-xs dark:text-white/30 dark:hover:text-white/60 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          Cambiar
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={prizeInput}
+                        onChange={(e) => setPrizeInput(e.target.value)}
+                        placeholder="Ej: Cena para dos personas"
+                        onKeyDown={(e) => e.key === 'Enter' && handleSavePrize()}
+                        className="flex-1 dark:bg-white/[0.07] bg-white dark:border dark:border-white/15 border border-gray-300 dark:text-white text-gray-900 dark:placeholder-white/20 placeholder-gray-400 rounded-xl px-3 py-2 text-sm focus:outline-none dark:focus:border-white/40 focus:border-gray-500 transition-colors"
+                      />
+                      <button
+                        onClick={handleSavePrize}
+                        disabled={!prizeInput.trim() || updateEventMutation.isPending}
+                        className="dark:bg-white dark:text-black bg-gray-900 text-white text-xs font-medium px-4 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Winner */}
+              {event.raffle_drawn_at && event.raffle_winner_name ? (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-xl space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-amber-400" />
+                    <p className="text-sm font-medium text-amber-400">Ganador del sorteo</p>
+                  </div>
+                  <p className="text-xl font-medium dark:text-white text-gray-900">{event.raffle_winner_name}</p>
+                  <p className="text-xs dark:text-white/30 text-gray-400">
+                    Sorteado el {new Date(event.raffle_drawn_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                  <button
+                    onClick={handleResetDraw}
+                    disabled={updateEventMutation.isPending}
+                    className="text-xs text-red-400 border border-red-500/30 px-3 py-1.5 rounded-full hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                  >
+                    Resetear sorteo
+                  </button>
+                </div>
+              ) : event.raffle_enabled && (
+                <div className="space-y-2">
+                  {drawError && (
+                    <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg">{drawError}</p>
+                  )}
+                  <button
+                    onClick={handleDraw}
+                    disabled={isDrawing || updateEventMutation.isPending}
+                    className="w-full flex items-center justify-center gap-2 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-sm font-medium py-3 rounded-xl transition-colors disabled:opacity-50"
+                  >
+                    <Shuffle className="w-4 h-4" />
+                    {isDrawing ? 'Sorteando...' : 'Realizar Sorteo'}
+                  </button>
+                  <p className="text-xs dark:text-white/25 text-gray-400 text-center">
+                    Se seleccionará una foto al azar. Más fotos = más posibilidades.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Bulk Download */}

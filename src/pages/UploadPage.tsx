@@ -1,7 +1,7 @@
 import React from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Camera } from 'lucide-react'
+import { Camera, Gift } from 'lucide-react'
 import { PhotoUploader } from '../components/PhotoUploader'
 import { supabase } from '../lib/supabase'
 
@@ -11,6 +11,8 @@ interface Event {
   description: string | null
   slug: string
   auto_approve: boolean
+  raffle_enabled: boolean
+  raffle_prize: string | null
 }
 
 export function UploadPage() {
@@ -26,7 +28,7 @@ export function UploadPage() {
     if (!eventSlug) throw new Error('Event slug is required')
     const { data, error } = await supabase
       .from('events')
-      .select('id, name, description, slug, auto_approve')
+      .select('id, name, description, slug, auto_approve, raffle_enabled, raffle_prize')
       .eq('slug', eventSlug)
       .single()
     if (error) throw error
@@ -79,7 +81,33 @@ export function UploadPage() {
         </div>
       </header>
 
-      <PhotoUploader eventId={event.id} eventSlug={event.slug} eventName={event.name} autoApprove={event.auto_approve} />
+      {/* Raffle banner */}
+      {event.raffle_enabled && (
+        <div className="flex-shrink-0">
+          <div className="max-w-lg mx-auto px-6 pt-4">
+            <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/25 rounded-2xl px-4 py-3.5">
+              <Gift className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-amber-400">¡Sorteo activo!</p>
+                <p className="text-xs text-white/50 mt-0.5">
+                  Cada foto que subas es una entrada automática al sorteo.
+                  {event.raffle_prize && (
+                    <> Premio: <span className="text-white/70 font-medium">{event.raffle_prize}</span></>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PhotoUploader
+        eventId={event.id}
+        eventSlug={event.slug}
+        eventName={event.name}
+        autoApprove={event.auto_approve}
+        raffleEnabled={event.raffle_enabled}
+      />
     </div>
   )
 }
