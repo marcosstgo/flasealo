@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Camera, QrCode, Shield, Download, Check, Search, Zap, Lock, ArrowRight, Sparkles } from 'lucide-react'
+import { Camera, QrCode, Shield, Download, Check, Search, Zap, Lock, ArrowRight, Sparkles, Gift, Trophy, Ticket } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
 import { ThemeToggle } from '../components/ThemeToggle'
@@ -287,6 +287,80 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* Raffle feature highlight */}
+      <section className="py-24 px-6 border-t dark:border-white/8 border-gray-100">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-full px-4 py-1.5 mb-6">
+                <Gift className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-amber-400 text-xs font-medium tracking-wide uppercase">Nuevo</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-light mb-4 leading-tight">
+                Sorteo integrado.<br />
+                <span className="dark:text-white/40 text-gray-400">Más fotos, más diversión.</span>
+              </h2>
+              <p className="dark:text-white/50 text-gray-500 text-base leading-relaxed mb-8">
+                Activa el modo sorteo y motiva a tus invitados a subir más fotos. Cada foto que suben es una entrada automática. Al final del evento, realiza el sorteo con un click y anuncia al ganador en la galería.
+              </p>
+              <div className="space-y-4">
+                {[
+                  { icon: Ticket, text: 'Cada foto subida = 1 entrada al sorteo' },
+                  { icon: Trophy, text: 'Define el premio y realiza el sorteo en un click' },
+                  { icon: Sparkles, text: 'El ganador se muestra en la galería pública' },
+                ].map((item) => (
+                  <div key={item.text} className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center justify-center shrink-0">
+                      <item.icon className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <p className="dark:text-white/70 text-gray-600 text-sm">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="relative">
+              <div className="dark:bg-white/[0.03] bg-white dark:border dark:border-white/10 border border-gray-200 rounded-3xl p-6 md:p-8 shadow-xl dark:shadow-none">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 pb-4 border-b dark:border-white/10 border-gray-100">
+                    <div className="w-10 h-10 bg-amber-500/15 rounded-full flex items-center justify-center">
+                      <Trophy className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs dark:text-white/30 text-gray-400 uppercase tracking-widest">Ganador del sorteo</p>
+                      <p className="font-medium text-lg">Carlos M.</p>
+                    </div>
+                  </div>
+                  <div className="dark:bg-white/5 bg-gray-50 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="dark:text-white/40 text-gray-500 text-sm">Premio</span>
+                      <span className="dark:text-white/80 text-gray-700 text-sm font-medium">Cena para dos</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="dark:text-white/40 text-gray-500 text-sm">Entradas</span>
+                      <span className="dark:text-white/80 text-gray-700 text-sm font-medium">12 fotos</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="dark:text-white/40 text-gray-500 text-sm">Participantes</span>
+                      <span className="dark:text-white/80 text-gray-700 text-sm font-medium">47 invitados</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <div className="flex -space-x-2">
+                      {['bg-blue-400', 'bg-green-400', 'bg-amber-400', 'bg-rose-400'].map((color) => (
+                        <div key={color} className={`w-7 h-7 ${color} rounded-full border-2 dark:border-[#0d0d0d] border-white`} />
+                      ))}
+                    </div>
+                    <p className="dark:text-white/30 text-gray-400 text-xs ml-1">+43 participaron</p>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-500/20 rounded-full blur-2xl" />
+              <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-amber-500/10 rounded-full blur-3xl" />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section className="py-32 px-6 border-t dark:border-white/10 border-gray-200">
         <div className="max-w-5xl mx-auto">
@@ -327,6 +401,16 @@ export function HomePage() {
                 icon: Zap,
                 title: 'Carga ultrarrápida',
                 desc: 'Sistema optimizado con miniaturas automáticas. Galerías con cientos de fotos se cargan al instante.'
+              },
+              {
+                icon: Gift,
+                title: 'Sorteo integrado',
+                desc: 'Activa el modo sorteo para motivar a los invitados. Cada foto = 1 entrada. Realiza el sorteo y anuncia al ganador en la galería.'
+              },
+              {
+                icon: Ticket,
+                title: 'Más fotos garantizadas',
+                desc: 'Los invitados suben más fotos cuando hay un incentivo. Recibe hasta 3x más contenido con el modo sorteo activado.'
               }
             ].map((feature) => (
               <div key={feature.title} className="dark:bg-white/5 bg-[#faf9f7] p-10 flex gap-5">
