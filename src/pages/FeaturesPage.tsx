@@ -141,6 +141,9 @@ export function FeaturesPage() {
           </Link>
           <div className="flex items-center space-x-3">
             <ThemeToggle />
+            <Link to="/pricing" className="dark:text-white/50 dark:hover:text-white text-gray-500 hover:text-gray-900 text-sm transition-colors hidden md:block">
+              Precios
+            </Link>
             {user ? (
               <Link to="/dashboard">
                 <button className="dark:bg-white dark:text-black bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-full hover:opacity-90 transition-opacity">
