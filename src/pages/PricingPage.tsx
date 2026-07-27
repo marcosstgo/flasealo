@@ -23,7 +23,7 @@ const plans = [
     color: 'dark:bg-white/[0.04] bg-white',
     features: [
       { text: '3 eventos activos', included: true },
-      { text: '300 fotos por evento', included: true },
+      { text: '150 fotos por evento', included: true },
       { text: 'QR único por evento', included: true },
       { text: 'Galería compartible', included: true },
       { text: 'Descarga ZIP', included: true },
@@ -48,8 +48,8 @@ const plans = [
     badge: 'Más popular',
     color: 'dark:bg-white/[0.07] bg-white',
     features: [
-      { text: 'Eventos ilimitados', included: true },
-      { text: 'Fotos ilimitadas', included: true },
+      { text: '15 eventos activos', included: true },
+      { text: '600 fotos por evento', included: true },
       { text: 'QR único por evento', included: true },
       { text: 'Galería compartible', included: true },
       { text: 'Descarga ZIP', included: true },
@@ -329,8 +329,8 @@ export function PricingPage() {
               </thead>
               <tbody className="divide-y dark:divide-white/5 divide-gray-100">
                 {[
-                  { label: 'Eventos activos', values: ['3', 'Ilimitados', 'Ilimitados'] },
-                  { label: 'Fotos por evento', values: ['300', 'Ilimitadas', 'Ilimitadas'] },
+                  { label: 'Eventos activos', values: ['3', '15', 'Ilimitados'] },
+                  { label: 'Fotos por evento', values: ['150', '600', 'Ilimitadas'] },
                   { label: 'Invitados simultáneos', values: ['Sin límite', 'Sin límite', 'Sin límite'] },
                   { label: 'QR por evento', values: [true, true, true] },
                   { label: 'Descarga ZIP', values: [true, true, true] },
